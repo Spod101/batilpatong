@@ -11,7 +11,7 @@ export function renderCloud(onBubbleClick) {
   document.getElementById('mcPlaceholder').style.display = S.memFacts.length ? 'none' : 'block';
   S.memFacts.forEach(f => {
     const b = document.createElement('div');
-    b.className = 'memory-bubble' + (f.merged ? ' merged' : '');
+    b.className = 'memory-bubble' + (f.merged ? ' merged' : '') + ((f.age || 0) >= 3 ? ' stale' : '');
     b.dataset.id = f.id;
     b.innerHTML = `<span class="bt">${esc(f.text)}</span><span class="bc">${f.cost}t</span>`;
     b.addEventListener('click', () => {

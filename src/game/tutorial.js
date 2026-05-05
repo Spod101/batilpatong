@@ -14,9 +14,9 @@ import { lockAll, lockEl, unlockEl, unlockFact, hlEl, clearHL } from '../ui/help
 const STEPS = [
   {
     title: 'Welcome, Detective.',
-    msg: 'Your AI witness has a faulty memory.\n\nWhen it holds too much information, it forgets the oldest facts to make room for new ones.\n\nYour job: feed it the right clues to solve a case.\n\nClick "Begin" to start training.',
+    msg: 'Your AI witness has a faulty memory.\n\nWhen it holds too much information, it forgets the oldest facts to make room for new ones.\n\nYour job: feed it the right clues to solve the case.\n\nClick "Begin" to start training.',
     showNext: true, nextLabel: 'Begin Training',
-    enter() { lockAll(); unlockEl('btn-tut-next'); },
+    enter() { lockAll(); unlockEl('btn-tut-next'); unlockEl('btn-skip-tut'); },
   },
   {
     title: 'Step 1 — Feed the Witness',
@@ -90,6 +90,10 @@ export function advanceTut() {
   enterStep(S.tutStep + 1);
 }
 
+export function skipTutorial() {
+  // Caller (main.js) handles navigation to game
+}
+
 export function isTutAllowed(fid) {
   switch (S.tutStep) {
     case 1: return fid === 'tut_glove';
@@ -115,7 +119,7 @@ function tutFactAdded(factId, forgotIds) {
           tutOk('Both facts are in memory. Watch this…');
           setTimeout(() => {
             addChat('player', 'Who is the thief?');
-            const r = aiRespond();
+            const r = aiRespond('Who is the thief?');
             S.queryCount++; updateQCounter();
             setTimeout(() => {
               addChat('ai', r);
@@ -141,7 +145,7 @@ function tutFactAdded(factId, forgotIds) {
           tutOk('The glove is back in memory! Watch this…');
           setTimeout(() => {
             addChat('player', 'Who is the thief?');
-            const r = aiRespond();
+            const r = aiRespond('Who is the thief?');
             S.queryCount++; updateQCounter();
             setTimeout(() => {
               addChat('ai', r);
@@ -185,8 +189,7 @@ export function onMergeDone(id1, id2) {
   }, 350);
 }
 
-// Called by main.js when a fact is dropped on the cloud during the tutorial
-export function handleDrop(fid, callbacks) {
+export function handleDrop(fid) {
   if (!isTutAllowed(fid)) {
     tutHint('Try dragging the highlighted fact.');
     return;
@@ -199,9 +202,7 @@ export function handleDrop(fid, callbacks) {
   if (!added) return;
 
   if (forgotIds.length) {
-    animateForgot(forgotIds, () => {
-      renderCloud(); renderCF(); updateBar();
-    });
+    animateForgot(forgotIds, () => { renderCloud(); renderCF(); updateBar(); });
   } else {
     renderCloud(); renderCF(); updateBar();
   }
@@ -209,7 +210,6 @@ export function handleDrop(fid, callbacks) {
   tutFactAdded(fid, forgotIds);
 }
 
-// Called when summarize button is clicked in tutorial step 5
 export function onSummarizeClicked() {
   if (S.tutStep === 5 && S.t5Phase === 'click_summarize') {
     S.t5Phase = 'select_facts';
@@ -222,7 +222,6 @@ export function onSummarizeClicked() {
   }
 }
 
-// Called during summarize selection phase
 export function onBubbleSelected(count) {
   if (S.tutStep === 5 && S.t5Phase === 'select_facts' && count === 2) {
     setTutMsg(STEPS[5].title, 'Both facts selected! Now click "Confirm Merge" to merge them.', false);
@@ -249,17 +248,23 @@ export function initTutorial() {
     caseSolved: false,
     locked: new Set(),
     draggingId: null,
+    suspects: [],
+    eliminatedIds: new Set(),
+    promptHistory: [],
+    accusedId: null,
+    selectedAccuseId: null,
   });
   S.cfFacts = TUT_CFG.facts.map(f => ({ ...f, cost: TUT_CFG.factCost, inMemory: false }));
 
-  document.getElementById('screen-game').style.display = 'flex';
-  document.getElementById('screen-end').style.display  = 'none';
-  document.getElementById('btn-accuse').style.display  = 'none';
-  document.getElementById('qCounter').style.display    = 'none';
-  document.getElementById('chat-log').innerHTML        = '';
+  document.getElementById('screen-landing').style.display = 'none';
+  document.getElementById('screen-game').style.display    = 'flex';
+  document.getElementById('screen-end').style.display     = 'none';
+  document.getElementById('btn-accuse').style.display     = 'none';
+  document.getElementById('qCounter').style.display       = 'none';
+  document.getElementById('chat-log').innerHTML           = '';
+  document.getElementById('suspect-list').innerHTML       = '';
   showTutPanel();
 
-  // Reset summarize UI
   document.getElementById('btn-confirm-merge').style.display = 'none';
   document.getElementById('btn-cancel-sum').style.display    = 'none';
   const sb = document.getElementById('btn-summarize');

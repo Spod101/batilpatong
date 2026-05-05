@@ -1,6 +1,6 @@
 import './styles/main.css';
 import { S } from './game/state.js';
-import { applyPromptOverflow, mergeFacts } from './game/tokenEngine.js';
+import { applyPromptOverflow, mergeFacts, ageMemory, analyzePrompt } from './game/tokenEngine.js';
 import { aiRespond } from './game/aiWitness.js';
 
 import {
@@ -8,21 +8,51 @@ import {
   handleDrop as tutDrop, onQueryDone as tutQueryDone,
   onMergeDone as tutMergeDone, onSummarizeClicked, onBubbleSelected,
 } from './game/tutorial.js';
-import { initGame, handleDrop as gameDrop, endGame } from './game/mainCase.js';
+import { initGame, handleDrop as gameDrop, endGame, eliminateSuspect, persistGameState } from './game/mainCase.js';
 
 import { updateBar }  from './ui/tokenBar.js';
 import { renderCloud, animateForgot, setupDropZone } from './ui/memoryCloud.js';
 import { renderCF }   from './ui/caseFile.js';
 import { addChat, updateQCounter, getInputValue, clearInput } from './ui/chatTerminal.js';
 import { tutHint, setTutMsg } from './ui/tutorialPanel.js';
-import { isTutorialComplete, setTutorialComplete } from './db/indexdb.js';
+import { renderSuspects, renderAccuseSuspects } from './ui/suspectPanel.js';
+import {
+  isTutorialComplete, setTutorialComplete,
+  loadCurrentGame, clearCurrentGame,
+} from './db/indexdb.js';
 
-// ── PWA service worker ───────────────────────────────────────
+// ── PWA service worker ───────────────────────────────────
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/sw.js').catch(() => {});
 }
 
-// ── Summarize mode ───────────────────────────────────────────
+// ── Landing page ─────────────────────────────────────────
+async function showLanding() {
+  S.phase = 'landing';
+  document.getElementById('screen-landing').style.display = 'flex';
+  document.getElementById('screen-game').style.display    = 'none';
+  document.getElementById('screen-end').style.display     = 'none';
+
+  // Show continue button only if a saved game exists
+  try {
+    const saved = await loadCurrentGame();
+    const btn   = document.getElementById('btn-continue');
+    if (btn) btn.style.display = saved ? 'block' : 'none';
+  } catch {
+    const btn = document.getElementById('btn-continue');
+    if (btn) btn.style.display = 'none';
+  }
+}
+
+// ── Tab switching (Case File / Suspects) ─────────────────
+function switchTab(tab) {
+  document.getElementById('case-file').style.display     = tab === 'evidence' ? 'flex' : 'none';
+  document.getElementById('suspect-panel').style.display = tab === 'suspects' ? 'flex' : 'none';
+  document.getElementById('tab-evidence').classList.toggle('tab-active', tab === 'evidence');
+  document.getElementById('tab-suspects').classList.toggle('tab-active', tab === 'suspects');
+}
+
+// ── Summarize mode ───────────────────────────────────────
 function enterSumMode() {
   if (S.memFacts.length < 2) {
     addChat('sys', 'Need at least 2 facts in memory to merge.');
@@ -83,9 +113,10 @@ function doConfirmMerge() {
   addChat('sys', `Merged → "${result.mergedText}" (${result.newCost}t, saved ${result.saved}t)`);
 
   if (S.phase === 'tutorial') tutMergeDone(id1, id2);
+  if (S.phase === 'game') persistGameState();
 }
 
-// ── Query submission ─────────────────────────────────────────
+// ── Query submission ─────────────────────────────────────
 function submitQuery(txt) {
   if (!txt.trim()) return;
 
@@ -99,15 +130,31 @@ function submitQuery(txt) {
   addChat('player', txt);
   clearInput();
 
-  const resp = aiRespond();
+  const resp = aiRespond(txt);
+  const tokCost = txt.trim().split(/\s+/).filter(Boolean).length * 2;
+
+  // Track prompt history for game phase
+  if (S.phase === 'game') {
+    const analysis = analyzePrompt(txt, S.promptHistory);
+    S.promptHistory.push({
+      text: txt,
+      tokensUsed: tokCost,
+      memSnapshot: S.memFacts.map(f => f.id),
+      response: resp,
+      analysis,
+    });
+  }
+
   S.queryCount++;
   updateQCounter();
+  ageMemory();
 
   setTimeout(() => {
     addChat('ai', resp);
     if (S.phase === 'tutorial') tutQueryDone();
     if (S.phase === 'game') {
       if (S.queryCount >= 3) document.getElementById('btn-accuse').disabled = false;
+      persistGameState();
       if (S.queryCount >= S.maxQueries && !S.caseSolved) {
         setTimeout(() => endGame(false), 1000);
       }
@@ -115,12 +162,20 @@ function submitQuery(txt) {
   }, 580);
 }
 
-// ── Accuse flow ──────────────────────────────────────────────
-function openAccuse() {
-  document.getElementById('accuse-modal').classList.add('open');
-  document.getElementById('accuse-input').value      = '';
+// ── Accuse flow ──────────────────────────────────────────
+function onAccuseSelect(id) {
+  S.selectedAccuseId = id;
+  renderAccuseSuspects(id, onAccuseSelect);
+  document.getElementById('btn-accuse-ok').disabled = false;
   document.getElementById('accuse-result').textContent = '';
-  setTimeout(() => document.getElementById('accuse-input').focus(), 60);
+}
+
+function openAccuse() {
+  S.selectedAccuseId = null;
+  document.getElementById('accuse-modal').classList.add('open');
+  document.getElementById('accuse-result').textContent = '';
+  document.getElementById('btn-accuse-ok').disabled    = true;
+  renderAccuseSuspects(null, onAccuseSelect);
 }
 
 function closeAccuse() {
@@ -128,31 +183,44 @@ function closeAccuse() {
 }
 
 function processAccuse() {
-  const raw = document.getElementById('accuse-input').value;
-  const inp = raw.toLowerCase().trim();
+  const id  = S.selectedAccuseId;
   const res = document.getElementById('accuse-result');
+  if (!id) { res.className = 'fail'; res.textContent = '◦ Select a suspect first.'; return; }
 
-  // Check memory for required evidence
   const mtext  = S.memFacts.map(f => f.text.toLowerCase()).join(' ');
-  const hasSc  = mtext.includes('scarf');
-  const hasMi  = mtext.includes('midnight');
-  const nameOk = inp.includes('red scarf') || inp.includes('scarf burglar') || inp === 'the red scarf burglar';
+  const hasSc  = mtext.includes('scarf') || mtext.includes('crane') || mtext.includes('pawn');
+  const hasMi  = mtext.includes('midnight') || mtext.includes('11 pm') || mtext.includes('jazz');
 
-  if (nameOk || (inp.includes('scarf') && (hasMi || inp.includes('midnight')))) {
-    res.className   = 'ok';
-    res.textContent = '✓ CORRECT! The Red Scarf Burglar is apprehended!';
-    S.caseSolved = true;
-    setTimeout(() => { closeAccuse(); endGame(true); }, 1400);
-  } else if (!hasSc && !hasMi) {
-    res.className   = 'fail';
-    res.textContent = '✗ Not enough evidence yet. Add the key clues to memory.';
+  S.accusedId = id;
+
+  if (id === 'victor') {
+    if (hasSc || hasMi) {
+      res.className   = 'ok';
+      res.textContent = '✓ CORRECT! Victor Crane is apprehended!';
+      S.caseSolved    = true;
+      setTimeout(() => { closeAccuse(); endGame(true); }, 1400);
+    } else {
+      res.className   = 'fail';
+      res.textContent = '✗ You lack the evidence to make this charge stick. Add key clues to memory.';
+    }
   } else {
-    res.className   = 'fail';
-    res.textContent = '✗ Wrong suspect. Keep investigating.';
+    if (!hasSc && !hasMi) {
+      res.className   = 'fail';
+      res.textContent = '✗ Not enough evidence yet. Investigate further before accusing.';
+    } else {
+      res.className   = 'fail';
+      res.textContent = '✗ Wrong suspect. The evidence points elsewhere.';
+      setTimeout(() => { closeAccuse(); endGame(false); }, 1600);
+    }
   }
 }
 
-// ── Universal drop handler ───────────────────────────────────
+// ── Eliminate suspect ────────────────────────────────────
+function handleEliminate(id) {
+  eliminateSuspect(id);
+}
+
+// ── Universal drop handler ───────────────────────────────
 function handleDrop(fid) {
   if (S.phase === 'tutorial') {
     tutDrop(fid);
@@ -161,24 +229,38 @@ function handleDrop(fid) {
   }
 }
 
-// ── Event wiring ─────────────────────────────────────────────
+// ── Event wiring ─────────────────────────────────────────
 function setupEvents() {
-  // Drop zone
   setupDropZone(handleDrop);
 
-  // Render callbacks
   renderCloud(toggleBubbleSel);
   renderCF(handleDrop);
+  renderSuspects(handleEliminate);
+
+  // Landing buttons
+  document.getElementById('btn-new-game').addEventListener('click', () => initGame());
+  document.getElementById('btn-continue').addEventListener('click', async () => {
+    try {
+      const saved = await loadCurrentGame();
+      if (saved) initGame(saved);
+      else initGame();
+    } catch { initGame(); }
+  });
+  document.getElementById('btn-go-tutorial').addEventListener('click', () => initTutorial());
 
   // Tutorial navigation
   document.getElementById('btn-tut-next').addEventListener('click', advanceTut);
+  document.getElementById('btn-skip-tut').addEventListener('click', async () => {
+    await setTutorialComplete().catch(() => {});
+    initGame();
+  });
   document.getElementById('btn-start-game').addEventListener('click', async () => {
     await setTutorialComplete().catch(() => {});
     initGame();
   });
 
-  // Replay
-  document.getElementById('btn-replay').addEventListener('click', () => initTutorial());
+  // Replay / back to landing
+  document.getElementById('btn-replay').addEventListener('click', () => showLanding());
 
   // Submit
   document.getElementById('btn-submit').addEventListener('click', () => {
@@ -209,25 +291,16 @@ function setupEvents() {
   document.getElementById('btn-accuse').addEventListener('click', openAccuse);
   document.getElementById('btn-accuse-ok').addEventListener('click', processAccuse);
   document.getElementById('btn-accuse-cancel').addEventListener('click', closeAccuse);
-  document.getElementById('accuse-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') processAccuse();
-    if (e.key === 'Escape') closeAccuse();
-  });
+
+  // Tabs
+  document.getElementById('tab-evidence').addEventListener('click', () => switchTab('evidence'));
+  document.getElementById('tab-suspects').addEventListener('click', () => switchTab('suspects'));
 }
 
-// ── Boot ─────────────────────────────────────────────────────
+// ── Boot ─────────────────────────────────────────────────
 async function boot() {
   setupEvents();
-  try {
-    const done = await isTutorialComplete();
-    if (done) {
-      initGame();
-    } else {
-      initTutorial();
-    }
-  } catch {
-    initTutorial();
-  }
+  showLanding();
 }
 
 boot();

@@ -1,5 +1,5 @@
-const DB_NAME      = 'fading-testimony';
-const DB_VERSION   = 1;
+const DB_NAME        = 'fading-testimony';
+const DB_VERSION     = 2;
 const STORE_SESSIONS = 'game_sessions';
 const STORE_PLAYER   = 'player';
 
@@ -80,6 +80,40 @@ export async function setTutorialComplete() {
     const tx    = db.transaction(STORE_PLAYER, 'readwrite');
     const store = tx.objectStore(STORE_PLAYER);
     const req   = store.put({ key: 'tutorialComplete', value: true });
+    req.onsuccess = () => resolve();
+    req.onerror   = e => reject(e.target.error);
+  });
+}
+
+// ── In-progress game save/restore ────────────────────────
+export async function saveCurrentGame(snapshot) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx    = db.transaction(STORE_PLAYER, 'readwrite');
+    const store = tx.objectStore(STORE_PLAYER);
+    const req   = store.put({ key: 'savedGame', value: snapshot });
+    req.onsuccess = () => resolve();
+    req.onerror   = e => reject(e.target.error);
+  });
+}
+
+export async function loadCurrentGame() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx    = db.transaction(STORE_PLAYER, 'readonly');
+    const store = tx.objectStore(STORE_PLAYER);
+    const req   = store.get('savedGame');
+    req.onsuccess = () => resolve(req.result?.value ?? null);
+    req.onerror   = e => reject(e.target.error);
+  });
+}
+
+export async function clearCurrentGame() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx    = db.transaction(STORE_PLAYER, 'readwrite');
+    const store = tx.objectStore(STORE_PLAYER);
+    const req   = store.delete('savedGame');
     req.onsuccess = () => resolve();
     req.onerror   = e => reject(e.target.error);
   });

@@ -11,10 +11,26 @@
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 </head>
-<body class="tut-active">
+<body>
+
+  <!-- ══ LANDING SCREEN ══════════════════════════════════════ -->
+  <div id="screen-landing">
+    <div id="landing-scanline"></div>
+    <div id="landing-inner">
+      <div id="landing-logo">◈</div>
+      <h1 id="landing-title">FADING TESTIMONY</h1>
+      <p id="landing-tagline">The witness remembers.<br>Until it doesn't.</p>
+      <div id="landing-menu">
+        <button id="btn-new-game">▶ NEW INVESTIGATION</button>
+        <button id="btn-continue" style="display:none">⟳ CONTINUE CASE</button>
+        <button id="btn-go-tutorial">◎ TRAINING</button>
+      </div>
+      <p id="landing-hint">Interrogate a witness with limited memory.<br>Manage your clues. Solve the case.</p>
+    </div>
+  </div>
 
   <!-- ══ TUTORIAL PANEL ═══════════════════════════════════════ -->
-  <div id="tut-panel">
+  <div id="tut-panel" class="hidden">
     <div id="tut-badge">Training — Step <span id="tut-step-num">0</span></div>
     <div id="tut-title"></div>
     <div id="tut-msg"></div>
@@ -25,10 +41,11 @@
       <small>Tutorial complete. Ready for the real case?</small>
       <button id="btn-start-game">▶ Start Real Case</button>
     </div>
+    <button id="btn-skip-tut">Skip Tutorial →</button>
   </div>
 
   <!-- ══ MAIN GAME SCREEN ═════════════════════════════════════ -->
-  <div id="screen-game">
+  <div id="screen-game" style="display:none">
 
     <!-- Token Bar -->
     <div id="token-bar-wrap">
@@ -38,13 +55,29 @@
       <div id="qCounter" style="display:none">Queries: 0</div>
     </div>
 
-    <!-- Middle: memory cloud + case file -->
+    <!-- Middle: memory cloud + right panel (tabs) -->
     <div id="game-middle">
       <div id="memory-cloud">
         <div id="mcPlaceholder">Drag facts here<br>to share with the witness</div>
       </div>
-      <div id="case-file">
-        <div id="cfTitle">Case File</div>
+
+      <!-- Right panel with tabs -->
+      <div id="right-panel">
+        <div id="panel-tabs">
+          <button id="tab-evidence" class="tab-btn tab-active">Evidence</button>
+          <button id="tab-suspects" class="tab-btn">Suspects</button>
+        </div>
+
+        <!-- Case File tab -->
+        <div id="case-file">
+          <div id="cfTitle">Case File</div>
+        </div>
+
+        <!-- Suspects tab -->
+        <div id="suspect-panel" style="display:none">
+          <div id="sp-title">Suspects</div>
+          <div id="suspect-list"></div>
+        </div>
       </div>
     </div>
 
@@ -70,11 +103,11 @@
   <div id="accuse-modal">
     <div id="accuse-box">
       <h2>⚖ FILE YOUR ACCUSATION</h2>
-      <div style="font-size:10px;color:#5a4a2a">Name the thief. Make it stick.</div>
-      <input id="accuse-input" type="text" placeholder="Enter suspect name…">
+      <div class="accuse-sub">Select the suspect you believe is guilty.</div>
+      <div id="accuse-suspects"></div>
       <div id="accuse-result"></div>
       <div class="ab-row">
-        <button id="btn-accuse-ok" style="border-color:#ff3a3a;color:#ff3a3a">Accuse</button>
+        <button id="btn-accuse-ok" disabled style="border-color:#ff3a3a;color:#ff3a3a">Confirm Accusation</button>
         <button id="btn-accuse-cancel">Cancel</button>
       </div>
     </div>
@@ -85,18 +118,30 @@
     <div id="end-title">CASE CLOSED</div>
     <div id="end-score">0 pts</div>
     <div id="end-rank">CADET</div>
+
+    <!-- Culprit reveal -->
+    <div id="end-culprit"></div>
+
+    <!-- Stats -->
     <div id="end-stats">
       <div class="sr"><span class="sl">Case Solved</span><span class="sv" id="s-solved">—</span></div>
       <div class="sr"><span class="sl">Queries Used</span><span class="sv" id="s-queries">—</span></div>
       <div class="sr"><span class="sl">Peak Memory</span><span class="sv" id="s-peak">—</span></div>
       <div class="sr"><span class="sl">Summarize Used</span><span class="sv" id="s-sum">—</span></div>
     </div>
+
+    <div id="end-share"></div>
+
+    <!-- Prompt history + analysis -->
+    <div id="end-prompt-history"></div>
+
+    <!-- Leaderboard -->
     <div id="end-leaderboard">
       <div class="lb-title">Top Detectives</div>
       <div id="lb-list"></div>
     </div>
-    <div id="end-share"></div>
-    <button id="btn-replay">↺ Play Again</button>
+
+    <button id="btn-replay">↩ Back to Menu</button>
   </div>
 
   <!-- Touch drag ghost -->

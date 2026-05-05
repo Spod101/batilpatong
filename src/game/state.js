@@ -14,49 +14,53 @@ export const GAME_CFG = {
   factCost: 40,
   maxQueries: 10,
   facts: [
-    { id: 'scarf',    text: 'The thief wore a red scarf.' },
-    { id: 'midnight', text: 'The theft occurred at midnight.' },
-    { id: 'guard',    text: 'The security guard was asleep.' },
-    { id: 'crash',    text: 'A loud crash was heard before the alarm.' },
-    { id: 'necklace', text: 'The stolen item was a blue diamond necklace.' },
+    { id: 'scarf',    text: 'A witness saw the thief wearing a red scarf.' },
+    { id: 'midnight', text: 'Theft at midnight — jazz club closed at 11 PM.' },
+    { id: 'guard',    text: 'Guard Petrov was asleep at his post.' },
+    { id: 'crash',    text: 'A crash heard at 11:58 PM before the alarm.' },
+    { id: 'necklace', text: 'Blue Diamond Necklace ($2M) taken from locked display.' },
+    { id: 'window',   text: 'East window found unlocked from the inside.' },
+    { id: 'pawnshop', text: 'Red fabric snagged near Crane\'s pawn shop on Ashford.' },
   ],
 };
 
 export const MERGE_TABLE = {
   'tut_glove+tut_midnight':  'Gloved hand at midnight',
   'tut_midnight+tut_glove':  'Gloved hand at midnight',
-  'tut_midnight+tut_window': 'Midnight break-in via open window',
-  'tut_window+tut_midnight': 'Midnight break-in via open window',
-  'tut_glove+tut_window':    'Gloved entry through open window',
-  'tut_window+tut_glove':    'Gloved entry through open window',
+  'tut_midnight+tut_window': 'Midnight break-in via window',
+  'tut_window+tut_midnight': 'Midnight break-in via window',
+  'tut_glove+tut_window':    'Gloved entry through window',
+  'tut_window+tut_glove':    'Gloved entry through window',
   'scarf+midnight':     'Red scarf thief at midnight',
   'midnight+scarf':     'Red scarf thief at midnight',
-  'scarf+guard':        'Scarf-wearing thief, guard asleep',
-  'guard+scarf':        'Scarf-wearing thief, guard asleep',
+  'scarf+pawnshop':     'Red scarf linked to Crane\'s shop',
+  'pawnshop+scarf':     'Red scarf linked to Crane\'s shop',
+  'scarf+guard':        'Scarf figure slipped past sleeping guard',
+  'guard+scarf':        'Scarf figure slipped past sleeping guard',
   'midnight+guard':     'Guard asleep at midnight',
   'guard+midnight':     'Guard asleep at midnight',
-  'crash+necklace':     'Crash preceded necklace theft',
+  'midnight+pawnshop':  'Crane\'s shop, midnight timeline',
+  'pawnshop+midnight':  'Crane\'s shop, midnight timeline',
+  'crash+midnight':     'Crash at 11:58 PM before theft',
+  'midnight+crash':     'Crash at 11:58 PM before theft',
   'necklace+crash':     'Crash preceded necklace theft',
-  'scarf+necklace':     'Red scarf thief took necklace',
-  'necklace+scarf':     'Red scarf thief took necklace',
-  'scarf+crash':        'Red scarf figure caused the crash',
-  'crash+scarf':        'Red scarf figure caused the crash',
-  'midnight+necklace':  'Necklace stolen at midnight',
-  'necklace+midnight':  'Necklace stolen at midnight',
-  'guard+crash':        'Crash while guard was asleep',
-  'crash+guard':        'Crash while guard was asleep',
-  'guard+necklace':     'Guard asleep, necklace taken',
-  'necklace+guard':     'Guard asleep, necklace taken',
+  'crash+necklace':     'Crash preceded necklace theft',
+  'window+guard':       'Unlocked window, sleeping guard',
+  'guard+window':       'Unlocked window, sleeping guard',
+  'scarf+necklace':     'Red scarf thief took the necklace',
+  'necklace+scarf':     'Red scarf thief took the necklace',
+  'pawnshop+necklace':  'Necklace linked to Crane\'s shop',
+  'necklace+pawnshop':  'Necklace linked to Crane\'s shop',
 };
 
 // Central mutable game state — all modules share this single object
 export const S = {
-  phase: 'tutorial',       // 'tutorial' | 'game' | 'end'
+  phase: 'landing',       // 'landing' | 'tutorial' | 'game' | 'end'
   tutStep: 0,
   t4WaitedQuery: false,
-  t5Phase: 'click_summarize', // click_summarize | select_facts | confirm_merge | drag_glove
-  memFacts: [],            // [{id, text, cost, merged, mergedFrom}]  oldest first
-  cfFacts: [],             // [{id, text, cost, inMemory}]
+  t5Phase: 'click_summarize',
+  memFacts: [],            // [{id, text, cost, merged, mergedFrom, age}]
+  cfFacts: [],
   tokenUsage: 0,
   tokenLimit: 140,
   factCost: 50,
@@ -70,4 +74,10 @@ export const S = {
   caseSolved: false,
   locked: new Set(),
   draggingId: null,
+  // New fields
+  suspects: [],            // copies of SUSPECTS for this session
+  eliminatedIds: new Set(),
+  promptHistory: [],       // [{text, tokensUsed, memSnapshot, response}]
+  accusedId: null,
+  selectedAccuseId: null,
 };
