@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#1a1a1a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Fading Testimony</title>
+<link rel="manifest" href='data:application/json,{"name":"Fading Testimony","short_name":"FadingTestimony","display":"standalone","background_color":"#1a1a1a","theme_color":"#1a1a1a","start_url":".","icons":[]}'>
+<style>
+/* ── reset ─────────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;overflow:hidden}
+body{background:#1a1a1a;color:#c8b97a;font-family:'Courier New',Courier,monospace;font-size:14px;user-select:none;-webkit-user-select:none}
+
+/* ── animations ─────────────────────────────────────────── */
+@keyframes fadeInBubble{from{opacity:0;transform:scale(.55)}to{opacity:1;transform:scale(1)}}
+@keyframes fadeOutBubble{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(.45)}}
+@keyframes pulseGlow{0%,100%{box-shadow:0 0 5px #39ff14,inset 0 0 3px rgba(57,255,20,.08)}50%{box-shadow:0 0 14px #39ff14,inset 0 0 8px rgba(57,255,20,.18)}}
+@keyframes pulseGlowAmber{0%,100%{box-shadow:0 0 5px #ffb300,inset 0 0 3px rgba(255,179,0,.08)}50%{box-shadow:0 0 14px #ffb300,inset 0 0 8px rgba(255,179,0,.18)}}
+@keyframes tutHL{0%,100%{box-shadow:0 0 8px #ffb300,0 0 18px rgba(255,179,0,.4),inset 0 0 6px rgba(255,179,0,.06)}50%{box-shadow:0 0 18px #ffb300,0 0 36px rgba(255,179,0,.6),inset 0 0 10px rgba(255,179,0,.12)}}
+@keyframes slideInLeft{from{transform:translateX(-105%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes chatIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes tokenPulse{0%,100%{opacity:1}50%{opacity:.55}}
+@keyframes scanline{0%{top:-4px}100%{top:100%}}
+@keyframes glowBtn{0%,100%{box-shadow:0 0 6px #39ff14}50%{box-shadow:0 0 18px #39ff14,0 0 30px rgba(57,255,20,.3)}}
+
+/* ── layout ─────────────────────────────────────────────── */
+#screen-game{display:flex;flex-direction:column;width:100%;height:100vh;transition:margin-left .35s}
+#screen-end{display:none;flex-direction:column;align-items:center;justify-content:flex-start;width:100%;height:100vh;overflow-y:auto;padding:40px 20px;gap:18px}
+
+/* ── token bar ──────────────────────────────────────────── */
+#token-bar-wrap{flex-shrink:0;background:#111;border-bottom:1px solid #3a2f1e;padding:7px 14px;display:flex;align-items:center;gap:10px;z-index:10}
+#tbTitle{font-size:9px;color:#5a4a2a;letter-spacing:3px;text-transform:uppercase;white-space:nowrap}
+#token-bar-track{flex:1;height:11px;background:#1a1208;border:1px solid #4a3a1e;border-radius:6px;overflow:hidden}
+#token-bar-fill{height:100%;width:0%;border-radius:6px;background:#39ff14;transition:width .3s,background .3s}
+#token-bar-fill.warn{background:#ffb300}
+#token-bar-fill.danger{background:#ff3a3a;animation:tokenPulse .8s infinite}
+#tbLabel{font-size:10px;color:#c8b97a;min-width:72px;text-align:right;white-space:nowrap}
+#qCounter{font-size:10px;color:#5a4a2a;white-space:nowrap;letter-spacing:1px}
+
+/* ── game middle ────────────────────────────────────────── */
+#game-middle{display:grid;grid-template-columns:2fr 1fr;flex:1;min-height:0;border-bottom:1px solid #2a1e0a}
+
+/* ── memory cloud ───────────────────────────────────────── */
+#memory-cloud{background:#080f08;border-right:1px solid #1e2a1e;padding:28px 10px 10px;display:flex;flex-wrap:wrap;align-content:flex-start;gap:7px;overflow-y:auto;position:relative;cursor:default;min-height:80px}
+#memory-cloud::before{content:'WITNESS MEMORY';position:absolute;top:6px;left:10px;font-size:8px;color:#1e3a1e;letter-spacing:3px;pointer-events:none}
+#memory-cloud.dz-over{background:#0b150b;box-shadow:inset 0 0 22px rgba(57,255,20,.08)}
+#memory-cloud.tutorial-highlight{animation:tutHL 1.2s infinite;border:1px solid rgba(255,179,0,.5)}
+#mcPlaceholder{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#1a3a1a;font-size:10px;text-align:center;line-height:1.9;pointer-events:none}
+
+.memory-bubble{background:rgba(57,255,20,.07);border:1px solid rgba(57,255,20,.28);border-radius:11px;padding:5px 9px;font-size:11px;color:#39ff14;animation:fadeInBubble .3s ease,pulseGlow 3s 1s infinite;cursor:pointer;display:flex;flex-direction:column;gap:2px;max-width:190px;word-break:break-word}
+.memory-bubble .bt{font-size:11px;line-height:1.4}
+.memory-bubble .bc{font-size:9px;color:rgba(57,255,20,.4);text-align:right}
+.memory-bubble.merged{background:rgba(255,179,0,.07);border-color:rgba(255,179,0,.35);color:#ffb300;animation:fadeInBubble .3s ease,pulseGlowAmber 3s 1s infinite}
+.memory-bubble.merged .bc{color:rgba(255,179,0,.4)}
+.memory-bubble.sel-merge{background:rgba(255,179,0,.18);border-color:#ffb300;box-shadow:0 0 12px rgba(255,179,0,.5);animation:none}
+.memory-bubble.forgetting{animation:fadeOutBubble .42s ease forwards!important}
+.memory-bubble.tutorial-highlight{animation:tutHL 1.1s infinite!important}
+
+/* ── case file ──────────────────────────────────────────── */
+#case-file{background:#140f05;padding:10px 8px;overflow-y:auto;display:flex;flex-direction:column;gap:5px}
+#cfTitle{font-size:8px;color:#5a4a2a;letter-spacing:3px;text-transform:uppercase;padding-bottom:7px;border-bottom:1px solid #2a1e0a;margin-bottom:3px}
+.fact-token{background:#1e1508;border:1px solid #4a3a1e;border-radius:4px;padding:6px 8px;font-size:11px;color:#c8b97a;cursor:grab;transition:border-color .18s,background .18s,opacity .18s;line-height:1.4}
+.fact-token:hover:not(.in-memory):not(.lf):not(.locked){border-color:#c8b97a;background:#2a1e0a}
+.fact-token.in-memory{opacity:.3;cursor:not-allowed;border-style:dashed;pointer-events:none}
+.fact-token.lf{opacity:.2;cursor:not-allowed;pointer-events:none}
+.fact-token.sel-fact{border-color:#39ff14;background:#0d1a0d;box-shadow:0 0 8px rgba(57,255,20,.35)}
+.fact-token.tutorial-highlight{animation:tutHL 1.1s infinite;border-color:rgba(255,179,0,.6)}
+.fact-token.locked{opacity:.2;pointer-events:none}
+
+/* ── chat area ──────────────────────────────────────────── */
+#chat-area{flex-shrink:0;display:flex;flex-direction:column;background:#0d0d0d;min-height:0}
+#chat-log{flex:1;overflow-y:auto;padding:7px 11px;display:flex;flex-direction:column;gap:5px;min-height:60px;max-height:28vh}
+.chat-msg{padding:5px 9px;border-radius:4px;font-size:11px;line-height:1.5;animation:chatIn .28s ease;max-width:88%}
+.chat-msg.player{background:#0d1a0d;border:1px solid #1e3a1e;color:#39ff14;align-self:flex-end}
+.chat-msg.ai{background:#1a1005;border:1px solid #3a2a10;color:#c8b97a;align-self:flex-start}
+.chat-msg.ai::before{content:'◈ WITNESS: ';color:#ffb300;font-size:9px}
+.chat-msg.sys{background:#111;border:1px solid #222;color:#555;font-size:9px;align-self:center;font-style:italic;border-radius:20px;padding:3px 10px}
+/* two-row controls: input+submit on top, action buttons below */
+#chat-controls{display:flex;flex-direction:column;gap:5px;padding:7px 9px;border-top:1px solid #1e1408;flex-shrink:0}
+#chat-input-row{display:flex;gap:5px;align-items:center}
+#chat-btn-row{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+#chat-input{flex:1;min-width:0;background:#080808;border:1px solid #2a1e0a;color:#c8b97a;padding:5px 9px;font-family:'Courier New',monospace;font-size:11px;border-radius:3px;outline:none}
+#chat-input:focus{border-color:#39ff14;box-shadow:0 0 5px rgba(57,255,20,.18)}
+#chat-input.locked{opacity:.25;pointer-events:none}
+
+/* ── buttons ────────────────────────────────────────────── */
+button{background:#1a1005;border:1px solid #4a3a1e;color:#c8b97a;padding:5px 11px;font-family:'Courier New',monospace;font-size:10px;cursor:pointer;border-radius:3px;text-transform:uppercase;letter-spacing:1px;transition:all .15s;white-space:nowrap}
+button:hover:not(:disabled):not(.locked){border-color:#c8b97a;color:#e8c88a}
+button:disabled,button.locked{opacity:.28;cursor:not-allowed}
+#btn-submit{border-color:#39ff14;color:#39ff14}
+#btn-submit:hover:not(:disabled):not(.locked){background:rgba(57,255,20,.08)}
+#btn-accuse{border-color:#ff3a3a;color:#ff3a3a}
+#btn-accuse:hover:not(:disabled):not(.locked){background:rgba(255,58,58,.08)}
+#btn-summarize.sum-active{border-color:#ffb300;color:#ffb300;background:rgba(255,179,0,.08)}
+#btn-confirm-merge{border-color:#ffb300;color:#ffb300;display:none}
+#btn-cancel-sum{display:none}
+
+/* ── tutorial panel ─────────────────────────────────────── */
+#tut-panel{position:fixed;left:0;top:0;width:270px;height:100vh;background:rgba(18,13,4,.97);border-right:2px solid rgba(255,179,0,.6);padding:18px 14px;display:flex;flex-direction:column;gap:12px;z-index:100;animation:slideInLeft .4s ease;overflow-y:auto;backdrop-filter:blur(4px)}
+#tut-panel.hidden{display:none}
+#tut-badge{font-size:8px;color:#ffb300;letter-spacing:3px;text-transform:uppercase;border-bottom:1px solid #2a1e0a;padding-bottom:8px}
+#tut-title{font-size:12px;color:#ffb300;font-weight:bold;line-height:1.45}
+#tut-msg{font-size:11px;color:#c8b97a;line-height:1.65;white-space:pre-line}
+#tut-hint{font-size:10px;color:#cc2222;min-height:14px;font-style:italic}
+#tut-ok{font-size:11px;color:#39ff14;line-height:1.5;display:none;padding:8px;border:1px solid rgba(57,255,20,.28);border-radius:4px;background:rgba(57,255,20,.04);white-space:pre-line}
+#btn-tut-next{border-color:#ffb300;color:#ffb300;display:none;align-self:flex-start}
+#btn-tut-next:hover{background:rgba(255,179,0,.1)}
+#tut-start-wrap{display:none;flex-direction:column;gap:9px;margin-top:6px}
+#tut-start-wrap small{font-size:9px;color:#4a3a1e}
+#btn-start-game{border-color:#39ff14;color:#39ff14;font-size:12px;padding:9px 14px;animation:glowBtn 2s infinite}
+
+/* ── accuse modal ───────────────────────────────────────── */
+#accuse-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:200;align-items:center;justify-content:center}
+#accuse-modal.open{display:flex}
+#accuse-box{background:#1a1005;border:2px solid #ff3a3a;border-radius:6px;padding:22px;max-width:380px;width:90%;display:flex;flex-direction:column;gap:11px}
+#accuse-box h2{color:#ff3a3a;font-size:13px;letter-spacing:2px}
+#accuse-input{background:#080808;border:1px solid #4a3a1e;color:#c8b97a;padding:7px 10px;font-family:'Courier New',monospace;font-size:12px;border-radius:3px;outline:none;width:100%}
+#accuse-input:focus{border-color:#ff3a3a}
+#accuse-result{font-size:11px;min-height:18px}
+#accuse-result.ok{color:#39ff14}
+#accuse-result.fail{color:#ff3a3a}
+.ab-row{display:flex;gap:8px}
+
+/* ── end screen ─────────────────────────────────────────── */
+#end-title{font-size:20px;letter-spacing:4px;text-transform:uppercase;margin-bottom:4px}
+#end-title.solved{color:#39ff14;text-shadow:0 0 18px #39ff14}
+#end-title.unsolved{color:#ff3a3a;text-shadow:0 0 18px #ff3a3a}
+#end-score{font-size:36px;color:#c8b97a}
+#end-rank{font-size:15px;letter-spacing:3px;color:#ffb300;text-shadow:0 0 10px rgba(255,179,0,.4)}
+#end-stats{background:#1a1005;border:1px solid #4a3a1e;padding:14px 20px;border-radius:4px;min-width:260px;display:flex;flex-direction:column;gap:8px}
+.sr{display:flex;justify-content:space-between;font-size:11px;border-bottom:1px solid #2a1e0a;padding-bottom:5px}
+.sr:last-child{border-bottom:none;padding-bottom:0}
+.sl{color:#5a4a2a}.sv{color:#ffb300}
+#btn-replay{border-color:#ffb300;color:#ffb300;font-size:12px;padding:9px 22px}
+
+/* ── drag ghost ─────────────────────────────────────────── */
+#drag-ghost{position:fixed;pointer-events:none;background:#2a1a08;border:1px solid #ffb300;border-radius:4px;padding:5px 9px;font-family:'Courier New',monospace;font-size:10px;color:#ffb300;z-index:9999;opacity:.88;max-width:170px;display:none;line-height:1.4}
+
+/* ── misc ───────────────────────────────────────────────── */
+.locked{opacity:.25!important;pointer-events:none!important}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:#111}
+::-webkit-scrollbar-thumb{background:#3a2a10;border-radius:2px}
+
+/* ── mobile layout ──────────────────────────────────────── */
+@media(max-width:639px){
+  /* Tutorial panel: fixed strip at the bottom, exact 210px tall */
+  #tut-panel{
+    top:auto;bottom:0;left:0;
+    width:100%;height:210px;max-height:210px;
+    border-right:none;border-top:2px solid rgba(255,179,0,.6);
+    animation:none;padding:10px 12px;gap:6px;
+    overflow-y:auto;flex-direction:column;
+  }
+  #tut-badge{font-size:8px}
+  #tut-title{font-size:11px}
+  #tut-msg{font-size:10px;line-height:1.5}
+  #tut-hint,#tut-ok{font-size:10px}
+  #btn-tut-next,#btn-start-game{font-size:10px;padding:5px 10px}
+  /* Game screen: shrink to the space ABOVE the tutorial panel */
+  body.tut-active #screen-game{
+    height:calc(100vh - 210px);
+    height:calc(100dvh - 210px);
+  }
+  /* Tighter chat log on small screens */
+  #chat-log{max-height:12vh}
+  /* Stack game-middle vertically on very small screens */
+  #game-middle{grid-template-columns:1fr;grid-template-rows:1fr auto}
+  #case-file{max-height:90px;flex-direction:row;flex-wrap:wrap;overflow-x:auto}
+  #cfTitle{width:100%}
+  .fact-token{font-size:10px;padding:4px 6px}
+}
+@media(min-width:640px){
+  body.tut-active #screen-game{margin-left:274px;width:calc(100vw - 274px)}
+}
+</style>
+</head>
+<body class="tut-active">
+
+<!-- ══ TUTORIAL PANEL ══════════════════════════════════════ -->
+<div id="tut-panel">
+  <div id="tut-badge">Training — Step <span id="tut-step-num">0</span></div>
+  <div id="tut-title"></div>
+  <div id="tut-msg"></div>
+  <div id="tut-hint"></div>
+  <div id="tut-ok"></div>
+  <button id="btn-tut-next">Next →</button>
+  <div id="tut-start-wrap">
+    <small>Tutorial complete. Ready for the real case?</small>
+    <button id="btn-start-game">▶ Start Real Case</button>
+  </div>
+</div>
+
+<!-- ══ MAIN GAME SCREEN ════════════════════════════════════ -->
+<div id="screen-game">
+
+  <!-- Token Bar -->
+  <div id="token-bar-wrap">
+    <div id="tbTitle">Memory</div>
+    <div id="token-bar-track"><div id="token-bar-fill"></div></div>
+    <div id="tbLabel">0 / 140</div>
+    <div id="qCounter" style="display:none">Queries: 0</div>
+  </div>
+
+  <!-- Middle: memory cloud + case file -->
+  <div id="game-middle">
+    <div id="memory-cloud">
+      <div id="mcPlaceholder">Drag facts here<br>to share with the witness</div>
+    </div>
+    <div id="case-file">
+      <div id="cfTitle">Case File</div>
+    </div>
+  </div>
+
+  <!-- Chat Area -->
+  <div id="chat-area">
+    <div id="chat-log"></div>
+    <div id="chat-controls">
+      <div id="chat-input-row">
+        <input id="chat-input" type="text" placeholder="Ask the witness…" autocomplete="off">
+        <button id="btn-submit">Submit</button>
+      </div>
+      <div id="chat-btn-row">
+        <button id="btn-summarize">Summarize</button>
+        <button id="btn-confirm-merge">Confirm Merge</button>
+        <button id="btn-cancel-sum">Cancel</button>
+        <button id="btn-accuse" disabled style="display:none">Accuse</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ACCUSE MODAL ════════════════════════════════════════ -->
+<div id="accuse-modal">
+  <div id="accuse-box">
+    <h2>⚖ FILE YOUR ACCUSATION</h2>
+    <div style="font-size:10px;color:#5a4a2a">Name the thief. Make it stick.</div>
+    <input id="accuse-input" type="text" placeholder="Enter suspect name…">
+    <div id="accuse-result"></div>
+    <div class="ab-row">
+      <button id="btn-accuse-ok" style="border-color:#ff3a3a;color:#ff3a3a">Accuse</button>
+      <button id="btn-accuse-cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ END SCREEN ══════════════════════════════════════════ -->
+<div id="screen-end">
+  <div id="end-title">CASE CLOSED</div>
+  <div id="end-score">0 pts</div>
+  <div id="end-rank">CADET</div>
+  <div id="end-stats">
+    <div class="sr"><span class="sl">Case Solved</span><span class="sv" id="s-solved">—</span></div>
+    <div class="sr"><span class="sl">Queries Used</span><span class="sv" id="s-queries">—</span></div>
+    <div class="sr"><span class="sl">Peak Memory</span><span class="sv" id="s-peak">—</span></div>
+    <div class="sr"><span class="sl">Summarize Used</span><span class="sv" id="s-sum">—</span></div>
+  </div>
+  <button id="btn-replay">↺ Play Again</button>
+</div>
+
+<!-- Touch drag ghost -->
+<div id="drag-ghost"></div>
+
+<script>
+'use strict';
+
+/* ── PWA stub ──────────────────────────────────────────── */
+if('serviceWorker' in navigator)
+  console.log('[FadingTestimony] SW registration skipped (demo mode).');
+
+/* ── CONFIGS ───────────────────────────────────────────── */
+const TUT_CFG = {
+  tokenLimit:140, factCost:50, maxQueries:999,
+  facts:[
+    {id:'tut_glove',   text:'The thief wore a glove on their left hand.'},
+    {id:'tut_midnight',text:'The theft happened at midnight.'},
+    {id:'tut_window',  text:'A window was left open.'},
+  ]
+};
+const GAME_CFG = {
+  tokenLimit:200, factCost:40, maxQueries:10,
+  facts:[
+    {id:'scarf',   text:'The thief wore a red scarf.'},
+    {id:'midnight',text:'The theft occurred at midnight.'},
+    {id:'guard',   text:'The security guard was asleep.'},
+    {id:'crash',   text:'A loud crash was heard before the alarm.'},
+    {id:'necklace',text:'The stolen item was a blue diamond necklace.'},
+  ]
+};
+
+/* ── MERGE TEXT TABLE ──────────────────────────────────── */
+const MERGE_TABLE = {
+  'tut_glove+tut_midnight':'Gloved hand at midnight',
+  'tut_midnight+tut_glove':'Gloved hand at midnight',
+  'tut_midnight+tut_window':'Midnight break-in via open window',
+  'tut_window+tut_midnight':'Midnight break-in via open window',
+  'tut_glove+tut_window':'Gloved entry through open window',
+  'tut_window+tut_glove':'Gloved entry through open window',
+  'scarf+midnight':'Red scarf thief at midnight',
+  'midnight+scarf':'Red scarf thief at midnight',
+  'scarf+guard':'Scarf-wearing thief, guard asleep',
+  'guard+scarf':'Scarf-wearing thief, guard asleep',
+  'midnight+guard':'Guard asleep at midnight',
+  'guard+midnight':'Guard asleep at midnight',
+  'crash+necklace':'Crash preceded necklace theft',
+  'necklace+crash':'Crash preceded necklace theft',
+  'scarf+necklace':'Red scarf thief took necklace',
+  'necklace+scarf':'Red scarf thief took necklace',
+  'scarf+crash':'Red scarf figure caused the crash',
+  'crash+scarf':'Red scarf figure caused the crash',
+  'midnight+necklace':'Necklace stolen at midnight',
+  'necklace+midnight':'Necklace stolen at midnight',
+  'guard+crash':'Crash while guard was asleep',
+  'crash+guard':'Crash while guard was asleep',
+  'guard+necklace':'Guard asleep, necklace taken',
+  'necklace+guard':'Guard asleep, necklace taken',
+};
+
+/* ── STATE ─────────────────────────────────────────────── */
+const S = {
+  phase:'tutorial',
+  tutStep:0,
+  t4WaitedQuery:false,
+  t5Phase:'click_summarize', // click_summarize|select_facts|confirm_merge|drag_glove
+  memFacts:[],    // [{id,text,cost,merged,mergedFrom}]  oldest first
+  cfFacts:[],     // [{id,text,cost,inMemory}]
+  tokenUsage:0,
+  tokenLimit:140,
+  factCost:50,
+  queryCount:0,
+  maxQueries:999,
+  isSummarizing:false,
+  sumSelected:[],
+  selectedFact:null,
+  peakToken:0,
+  usedSummarize:false,
+  caseSolved:false,
+  locked:new Set(),
+  draggingId:null,
+};
+
+/* ── AI ENGINE ─────────────────────────────────────────── */
+function memText(){return S.memFacts.map(f=>f.text.toLowerCase()).join(' ');}
+function memIds(){return new Set(S.memFacts.map(f=>f.id));}
+
+function aiRespond(){
+  if(S.phase==='tutorial') return aiTutorial();
+  return aiGame();
+}
+
+function aiTutorial(){
+  const t=memText();
+  const hasGlove  = t.includes('glove');
+  const hasMid    = t.includes('midnight');
+  const hasWin    = t.includes('window');
+  const hasMerged = S.memFacts.some(f=>f.merged);
+  if(hasMerged && hasGlove)
+    return 'I see it clearly now... a gloved hand in a midnight break-in through an open window... The Midnight Glove — that is the thief!';
+  if(hasGlove && hasMid)
+    return "I see it now... a gloved hand... striking at midnight... The Midnight Glove! That's the thief!";
+  if(hasMid && hasWin && !hasGlove)
+    return "It was midnight... a window left open... but I cannot recall the hand. The name... it's lost in shadow.";
+  if(hasGlove && !hasMid)
+    return "I remember... a glove on someone's hand... but the hour escapes me. I cannot yet name the face.";
+  if(hasMid && !hasGlove && !hasWin)
+    return "It was midnight... but the figure is cloaked in shadow. I need more to go on.";
+  if(hasWin && !hasGlove && !hasMid)
+    return "A window... left open... an entry point perhaps. But who? And when? I need more.";
+  return "The fog... I see nothing. Show me something to remember.";
+}
+
+const GRESP = {
+  both:[
+    "I see it... a figure wrapped in a red scarf, moving at midnight. The Red Scarf Burglar — that's who took the necklace!",
+    "Yes! A red scarf... midnight... it has to be the Red Scarf Burglar. I am certain.",
+    "The image is clear: red scarf, midnight hour. The Red Scarf Burglar — no question.",
+  ],
+  scarf:[
+    "A red scarf... distinctive, memorable... but the timing slips away. When did they strike?",
+    "I recall a red scarf clearly. But the night's details are murky — I need more.",
+    "The scarf stands out in my memory... but I cannot place the hour. Something is missing.",
+  ],
+  midnight:[
+    "It happened at midnight, I am certain. But the figure is shadowed — who were they?",
+    "Midnight... yes. But the face, the clothing... all shadow. Give me more.",
+    "The clock struck midnight. Beyond that... nothing but fog.",
+  ],
+  guard:[
+    "The guard was asleep... someone slipped past unnoticed. But who?",
+    "I see the sleeping guard... an opportunity taken. But by whom?",
+  ],
+  crash:[
+    "A crash before the alarm... deliberate, perhaps — a diversion. But by whom?",
+    "The sound of breaking glass, then silence, then the alarm. Who made that crash?",
+  ],
+  necklace:[
+    "The blue diamond necklace... it glitters in my memory. But who took it?",
+    "I see the necklace, cold and blue. Someone reached for it in the dark. Who?",
+  ],
+  nothing:[
+    "The memory is dark... I see nothing. Give me something to hold onto.",
+    "I cannot help you. My mind is empty. Share a clue with me.",
+    "There is only darkness here. What do you want me to remember?",
+  ],
+};
+function aiGame(){
+  const t=memText();
+  const qi=S.queryCount%3;
+  const hasSc=t.includes('scarf');
+  const hasMi=t.includes('midnight');
+  if(hasSc&&hasMi) return GRESP.both[qi%GRESP.both.length];
+  if(hasSc)        return GRESP.scarf[qi%GRESP.scarf.length];
+  if(hasMi)        return GRESP.midnight[qi%GRESP.midnight.length];
+  if(t.includes('guard')||t.includes('security')) return GRESP.guard[qi%GRESP.guard.length];
+  if(t.includes('crash'))    return GRESP.crash[qi%GRESP.crash.length];
+  if(t.includes('necklace')) return GRESP.necklace[qi%GRESP.necklace.length];
+  return GRESP.nothing[qi%GRESP.nothing.length];
+}
+
+/* ── TOKEN / MEMORY ────────────────────────────────────── */
+function addFact(factId){
+  const fact=S.cfFacts.find(f=>f.id===factId);
+  if(!fact||fact.inMemory) return false;
+
+  // Collect facts that need to be forgotten (animate later)
+  const forgotIds=[];
+  while(S.tokenUsage+fact.cost>S.tokenLimit && S.memFacts.length>0){
+    const oldest=S.memFacts.shift();
+    S.tokenUsage-=oldest.cost;
+    const cf=S.cfFacts.find(f=>f.id===oldest.id);
+    if(cf) cf.inMemory=false;
+    forgotIds.push(oldest.id);
+  }
+  if(S.tokenUsage+fact.cost>S.tokenLimit) return false;
+
+  fact.inMemory=true;
+  S.memFacts.push({id:fact.id,text:fact.text,cost:fact.cost,merged:false});
+  S.tokenUsage+=fact.cost;
+  if(S.tokenUsage>S.peakToken) S.peakToken=S.tokenUsage;
+
+  if(forgotIds.length){
+    // Animate forgotten bubbles then re-render
+    forgotIds.forEach(id=>{
+      const b=document.querySelector(`.memory-bubble[data-id="${id}"]`);
+      if(b) b.classList.add('forgetting');
+    });
+    setTimeout(()=>{
+      renderCloud(); renderCF(); updateBar();
+    },460);
+    return true; // tutorial callback will be called by handleDrop
+  }
+  renderCloud(); renderCF(); updateBar();
+  return true;
+}
+
+function promptTokens(txt){ return txt.trim().split(/\s+/).filter(Boolean).length*2; }
+
+function submitQuery(txt){
+  if(!txt.trim()) return;
+  // Shed memory if needed to fit the prompt temporarily
+  const pt=promptTokens(txt);
+  while(S.tokenUsage+pt>S.tokenLimit && S.memFacts.length>0){
+    const oldest=S.memFacts.shift();
+    S.tokenUsage-=oldest.cost;
+    const cf=S.cfFacts.find(f=>f.id===oldest.id);
+    if(cf) cf.inMemory=false;
+    const b=document.querySelector(`.memory-bubble[data-id="${oldest.id}"]`);
+    if(b){b.classList.add('forgetting');setTimeout(()=>{b.remove();},460);}
+  }
+  renderCloud(); renderCF(); updateBar();
+
+  addChat('player',txt);
+  document.getElementById('chat-input').value='';
+
+  const resp=aiRespond();
+  S.queryCount++;
+  updateQCounter();
+
+  setTimeout(()=>{
+    addChat('ai',resp);
+    if(S.phase==='tutorial') tutQueryDone();
+    if(S.phase==='game'&&S.queryCount>=3) document.getElementById('btn-accuse').disabled=false;
+    if(S.phase==='game'&&S.queryCount>=S.maxQueries&&!S.caseSolved) setTimeout(()=>endGame(false),1000);
+  },580);
+}
+
+/* ── SUMMARIZE ─────────────────────────────────────────── */
+function enterSumMode(){
+  if(S.memFacts.length<2){addChat('sys','Need at least 2 facts in memory to merge.');return;}
+  S.isSummarizing=true; S.sumSelected=[];
+  const sb=document.getElementById('btn-summarize');
+  sb.classList.add('sum-active'); sb.textContent='Selecting…';
+  document.getElementById('btn-confirm-merge').style.display='none';
+  document.getElementById('btn-cancel-sum').style.display='inline-block';
+  addChat('sys','Click two facts in the memory cloud to select them for merging.');
+}
+function exitSumMode(){
+  S.isSummarizing=false; S.sumSelected=[];
+  const sb=document.getElementById('btn-summarize');
+  sb.classList.remove('sum-active'); sb.textContent='Summarize';
+  document.getElementById('btn-confirm-merge').style.display='none';
+  document.getElementById('btn-cancel-sum').style.display='none';
+  document.querySelectorAll('.memory-bubble.sel-merge').forEach(b=>b.classList.remove('sel-merge'));
+}
+function toggleBubbleSel(fid){
+  if(!S.isSummarizing) return;
+  const idx=S.sumSelected.indexOf(fid);
+  const bub=document.querySelector(`.memory-bubble[data-id="${fid}"]`);
+  if(idx>=0){
+    S.sumSelected.splice(idx,1);
+    bub?.classList.remove('sel-merge');
+  } else {
+    if(S.sumSelected.length>=2) return;
+    S.sumSelected.push(fid);
+    bub?.classList.add('sel-merge');
+  }
+  const cfm=document.getElementById('btn-confirm-merge');
+  if(S.sumSelected.length===2){
+    cfm.style.display='inline-block';
+    cfm.disabled=false; cfm.classList.remove('locked');
+  } else {
+    cfm.style.display='none';
+  }
+  // Tutorial step 5 select_facts tracking
+  if(S.phase==='tutorial'&&S.tutStep===5&&S.t5Phase==='select_facts'){
+    if(S.sumSelected.length===2){
+      setTutMsg(TUT_STEPS[5].title,'Both facts selected! Now click "Confirm Merge" to merge them.',false);
+    }
+  }
+}
+function confirmMerge(){
+  if(S.sumSelected.length!==2) return;
+  const [id1,id2]=S.sumSelected;
+  const f1=S.memFacts.find(f=>f.id===id1);
+  const f2=S.memFacts.find(f=>f.id===id2);
+  if(!f1||!f2){exitSumMode();return;}
+
+  const mtext=MERGE_TABLE[`${id1}+${id2}`]||
+    (f1.text.substring(0,18)+'… & '+f2.text.substring(0,18)+'…').substring(0,44);
+  const oldCost=f1.cost+f2.cost;
+  const newCost=60;
+
+  S.memFacts=S.memFacts.filter(f=>f.id!==id1&&f.id!==id2);
+  S.tokenUsage-=oldCost;
+
+  // Mark originals as consumed in case file (greyed out)
+  [id1,id2].forEach(id=>{
+    const cf=S.cfFacts.find(f=>f.id===id);
+    if(cf) cf.inMemory=true;
+  });
+
+  const mid=`merged_${id1}_${id2}_${Date.now()}`;
+  S.memFacts.push({id:mid,text:mtext,cost:newCost,merged:true,mergedFrom:[id1,id2]});
+  S.tokenUsage+=newCost;
+  S.usedSummarize=true;
+
+  exitSumMode();
+  renderCloud(); renderCF(); updateBar();
+  addChat('sys',`Merged → "${mtext}" (${newCost}t, saved ${oldCost-newCost}t)`);
+
+  if(S.phase==='tutorial') tutMergeDone(id1,id2);
+}
+
+/* ── RENDER ────────────────────────────────────────────── */
+function renderCloud(){
+  const cl=document.getElementById('memory-cloud');
+  cl.querySelectorAll('.memory-bubble').forEach(b=>b.remove());
+  document.getElementById('mcPlaceholder').style.display=S.memFacts.length?'none':'block';
+  S.memFacts.forEach(f=>{
+    const b=document.createElement('div');
+    b.className='memory-bubble'+(f.merged?' merged':'');
+    b.dataset.id=f.id;
+    b.innerHTML=`<span class="bt">${esc(f.text)}</span><span class="bc">${f.cost}t</span>`;
+    b.addEventListener('click',()=>{
+      if(S.isSummarizing) toggleBubbleSel(f.id);
+    });
+    cl.appendChild(b);
+  });
+}
+
+function renderCF(){
+  const cf=document.getElementById('case-file');
+  cf.querySelectorAll('.fact-token').forEach(el=>el.remove());
+  S.cfFacts.forEach(f=>{
+    const el=document.createElement('div');
+    el.className='fact-token'+(f.inMemory?' in-memory':'');
+    el.id=`fact-${f.id}`;
+    el.dataset.fid=f.id;
+    el.draggable=!f.inMemory;
+    el.textContent=f.text;
+
+    // HTML5 drag
+    el.addEventListener('dragstart',e=>{
+      if(f.inMemory||el.classList.contains('lf')||el.classList.contains('locked')){e.preventDefault();return;}
+      S.draggingId=f.id;
+      e.dataTransfer.setData('text/plain',f.id);
+      e.dataTransfer.effectAllowed='move';
+    });
+    el.addEventListener('dragend',()=>{S.draggingId=null;});
+
+    // Click select fallback
+    el.addEventListener('click',()=>{
+      if(f.inMemory||el.classList.contains('lf')||el.classList.contains('locked')) return;
+      if(S.selectedFact===f.id){
+        S.selectedFact=null; el.classList.remove('sel-fact');
+      } else {
+        document.querySelectorAll('.fact-token.sel-fact').forEach(x=>x.classList.remove('sel-fact'));
+        S.selectedFact=f.id; el.classList.add('sel-fact');
+      }
+    });
+
+    setupTouch(el,f.id);
+    cf.appendChild(el);
+  });
+}
+
+function updateBar(){
+  const pct=S.tokenLimit>0?(S.tokenUsage/S.tokenLimit)*100:0;
+  const fill=document.getElementById('token-bar-fill');
+  fill.style.width=pct+'%';
+  fill.classList.remove('warn','danger');
+  if(pct>85) fill.classList.add('danger');
+  else if(pct>60) fill.classList.add('warn');
+  document.getElementById('tbLabel').textContent=`${S.tokenUsage} / ${S.tokenLimit}`;
+}
+function updateQCounter(){
+  const el=document.getElementById('qCounter');
+  el.textContent=S.phase==='game'?`Queries: ${S.queryCount} / ${S.maxQueries}`:`Queries: ${S.queryCount}`;
+}
+
+function addChat(role,txt){
+  const log=document.getElementById('chat-log');
+  const m=document.createElement('div');
+  m.className=`chat-msg ${role==='system'?'sys':role}`;
+  m.textContent=txt;
+  log.appendChild(m);
+  log.scrollTop=log.scrollHeight;
+}
+
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+/* ── TUTORIAL HELPERS ──────────────────────────────────── */
+function lockAll(){
+  ['chat-input','btn-submit','btn-summarize','btn-accuse','btn-confirm-merge'].forEach(lockEl);
+  document.querySelectorAll('.fact-token').forEach(el=>el.classList.add('lf'));
+}
+function lockEl(id){
+  S.locked.add(id);
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.classList.add('locked');
+  if(el.tagName==='BUTTON') el.disabled=true;
+}
+function unlockEl(id){
+  S.locked.delete(id);
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.classList.remove('locked');
+  if(el.tagName==='BUTTON') el.disabled=false;
+}
+function unlockFact(fid){
+  const el=document.getElementById(`fact-${fid}`);
+  if(el) el.classList.remove('lf');
+  S.locked.delete(`fact-${fid}`);
+}
+function hlEl(id){const el=document.getElementById(id);if(el) el.classList.add('tutorial-highlight');}
+function clearHL(){document.querySelectorAll('.tutorial-highlight').forEach(el=>el.classList.remove('tutorial-highlight'));}
+
+function setTutMsg(title,msg,showNext=false,nextLabel='Next →'){
+  document.getElementById('tut-title').textContent=title;
+  document.getElementById('tut-msg').textContent=msg;
+  document.getElementById('tut-hint').textContent='';
+  document.getElementById('tut-ok').style.display='none';
+  document.getElementById('tut-ok').textContent='';
+  const nb=document.getElementById('btn-tut-next');
+  nb.style.display=showNext?'block':'none';
+  nb.textContent=nextLabel;
+}
+function tutOk(msg,showNext=false,nextLabel='Next →'){
+  const ok=document.getElementById('tut-ok');
+  ok.textContent='✓ '+msg; ok.style.display='block';
+  const nb=document.getElementById('btn-tut-next');
+  nb.style.display=showNext?'block':'none';
+  nb.textContent=nextLabel;
+}
+function tutHint(msg){document.getElementById('tut-hint').textContent=msg?'⚠ '+msg:'';}
+
+/* ── TUTORIAL STEP DEFINITIONS ─────────────────────────── */
+const TUT_STEPS=[
+  { // 0
+    title:'Welcome, Detective.',
+    msg:'Your AI witness has a faulty memory.\n\nWhen it holds too much information, it forgets the oldest facts to make room for new ones.\n\nYour job: feed it the right clues to solve a case.\n\nClick "Begin" to start training.',
+    showNext:true, nextLabel:'Begin Training',
+    enter(){lockAll();unlockEl('btn-tut-next');}
+  },
+  { // 1
+    title:'Step 1 — Feed the Witness',
+    msg:'This is your Case File on the right.\n\nDrag the fact about "the glove" into the green Witness Memory area on the left.\n\nOn mobile: tap the fact, then tap the memory area.',
+    enter(){
+      lockAll(); clearHL();
+      unlockFact('tut_glove');
+      hlEl('fact-tut_glove'); hlEl('memory-cloud');
+    }
+  },
+  { // 2
+    title:'Step 2 — Ask a Question',
+    msg:'The witness now knows one fact.\n\nType anything in the box below (e.g. "Who is the thief?") and click Submit.',
+    enter(){
+      lockAll(); clearHL();
+      unlockEl('chat-input'); unlockEl('btn-submit');
+      hlEl('chat-input'); hlEl('btn-submit');
+    }
+  },
+  { // 3
+    title:'Step 3 — More Clues',
+    msg:'The witness couldn\'t name the thief with just one clue. It needs more.\n\nDrag "The theft happened at midnight" into the memory cloud.',
+    enter(){
+      lockAll(); clearHL();
+      unlockFact('tut_midnight');
+      hlEl('fact-tut_midnight'); hlEl('memory-cloud');
+    }
+  },
+  { // 4
+    title:'Step 4 — Memory Overflow',
+    msg:'Two clues were enough to solve it! But memory is limited.\n\nNow drag the third fact ("A window was left open") into the memory cloud. Watch what happens.',
+    enter(){
+      S.t4WaitedQuery=false;
+      lockAll(); clearHL();
+      unlockFact('tut_window');
+      hlEl('fact-tut_window'); hlEl('memory-cloud');
+    }
+  },
+  { // 5
+    title:'Step 5 — Summarize',
+    msg:'The glove clue was forgotten! Without it, the witness can\'t name the thief.\n\nYou can compress two facts into one to save space.\n\nClick the Summarize button to begin.',
+    enter(){
+      S.t5Phase='click_summarize';
+      lockAll(); clearHL();
+      unlockEl('btn-summarize');
+      hlEl('btn-summarize');
+    }
+  },
+  { // 6
+    title:'Training Complete!',
+    msg:'You compressed information to preserve the crucial clue. By managing memory wisely, the witness could identify the thief.\n\nYou are ready for a real case.',
+    enter(){
+      lockAll(); clearHL();
+      document.getElementById('tut-start-wrap').style.display='flex';
+      document.getElementById('btn-tut-next').style.display='none';
+    }
+  },
+];
+
+function enterTutStep(n){
+  S.tutStep=n;
+  document.getElementById('tut-step-num').textContent=n;
+  const st=TUT_STEPS[n];
+  if(!st) return;
+  document.getElementById('tut-start-wrap').style.display='none';
+  setTutMsg(st.title,st.msg,st.showNext||false,st.nextLabel||'Next →');
+  clearHL();
+  if(st.enter) st.enter();
+}
+function advanceTut(){enterTutStep(S.tutStep+1);}
+
+/* ── TUTORIAL FACT ADDED CALLBACK ──────────────────────── */
+function tutFactAdded(factId,hadOverflow){
+  const delay=hadOverflow?500:0;
+  setTimeout(()=>{
+    switch(S.tutStep){
+      case 1:
+        if(factId==='tut_glove'){
+          tutOk('The witness now knows that fact. Notice the token bar filled up a little.',true);
+        }
+        break;
+      case 3:
+        if(factId==='tut_midnight'){
+          tutOk('Both facts are in memory. Watch this…');
+          setTimeout(()=>{
+            addChat('player','Who is the thief?');
+            const r=aiRespond(); S.queryCount++; updateQCounter();
+            setTimeout(()=>{
+              addChat('ai',r);
+              tutOk('When both facts were remembered, the witness solved the case!\n\nBut what if memory runs out?',true);
+            },580);
+          },700);
+        }
+        break;
+      case 4:
+        if(factId==='tut_window'){
+          const gloveGone=!S.memFacts.some(f=>f.id==='tut_glove');
+          if(gloveGone){
+            tutOk('The witness forgot the glove fact! Memory is limited.\n\nNow ask who the thief is again.',false);
+            unlockEl('chat-input'); unlockEl('btn-submit');
+            clearHL(); hlEl('chat-input'); hlEl('btn-submit');
+          }
+        }
+        break;
+      case 5:
+        if(S.t5Phase==='drag_glove'&&factId==='tut_glove'){
+          tutOk('The glove is back in memory! Watch this…');
+          setTimeout(()=>{
+            addChat('player','Who is the thief?');
+            const r=aiRespond(); S.queryCount++; updateQCounter();
+            setTimeout(()=>{
+              addChat('ai',r);
+              tutOk('Excellent! By compressing information, you preserved the crucial clue.',true);
+            },580);
+          },700);
+        }
+        break;
+    }
+  },delay);
+}
+
+/* ── TUTORIAL QUERY DONE ───────────────────────────────── */
+function tutQueryDone(){
+  switch(S.tutStep){
+    case 2:
+      tutOk('The witness responded but couldn\'t name the thief. It needs more clues.',true);
+      break;
+    case 4:
+      if(!S.t4WaitedQuery){
+        S.t4WaitedQuery=true;
+        setTimeout(()=>{
+          tutOk('Without the glove fact, the witness can\'t identify the thief.\n\nYou must carefully manage what it remembers.',true);
+        },300);
+      }
+      break;
+  }
+}
+
+/* ── TUTORIAL MERGE DONE ───────────────────────────────── */
+function tutMergeDone(id1,id2){
+  if(S.tutStep===5){
+    S.t5Phase='drag_glove';
+    setTimeout(()=>{
+      setTutMsg('Step 5 — Drag the Glove Back',
+        'The two facts merged into one, freeing space.\n\nNow drag the glove fact back from the case file into memory.',false);
+      unlockFact('tut_glove'); renderCF();
+      clearHL(); hlEl('fact-tut_glove'); hlEl('memory-cloud');
+    },350);
+  }
+}
+
+/* ── ALLOWED FACT CHECK ────────────────────────────────── */
+function isTutAllowed(fid){
+  switch(S.tutStep){
+    case 1: return fid==='tut_glove';
+    case 3: return fid==='tut_midnight';
+    case 4: return fid==='tut_window';
+    case 5: return S.t5Phase==='drag_glove'&&fid==='tut_glove';
+    default: return false;
+  }
+}
+
+/* ── DROP HANDLER ──────────────────────────────────────── */
+function handleDrop(fid){
+  if(!fid) return;
+  const fact=S.cfFacts.find(f=>f.id===fid);
+  if(!fact||fact.inMemory){tutHint('Already in memory.');return;}
+
+  if(S.phase==='tutorial'){
+    if(!isTutAllowed(fid)){
+      tutHint('Try dragging the highlighted fact.');
+      return;
+    }
+  }
+
+  const prevUsage=S.tokenUsage;
+  const added=addFact(fid);
+  if(!added) return;
+
+  const hadOverflow=S.tokenUsage<prevUsage+fact.cost; // overflow occurred if net gain < cost
+  if(S.phase==='tutorial') tutFactAdded(fid,hadOverflow);
+
+  // Clear any hint
+  tutHint('');
+  // Deselect
+  S.selectedFact=null;
+  document.querySelectorAll('.fact-token.sel-fact').forEach(el=>el.classList.remove('sel-fact'));
+}
+
+/* ── DRAG & DROP SETUP ─────────────────────────────────── */
+function setupDropZone(){
+  const cl=document.getElementById('memory-cloud');
+  cl.addEventListener('dragover',e=>{e.preventDefault();cl.classList.add('dz-over');});
+  cl.addEventListener('dragleave',()=>cl.classList.remove('dz-over'));
+  cl.addEventListener('drop',e=>{
+    e.preventDefault(); cl.classList.remove('dz-over');
+    const fid=e.dataTransfer.getData('text/plain')||S.draggingId;
+    if(fid) handleDrop(fid);
+  });
+  // Click fallback: click cloud to drop selected fact
+  cl.addEventListener('click',e=>{
+    if(e.target.closest('.memory-bubble')) return;
+    if(S.selectedFact) handleDrop(S.selectedFact);
+  });
+}
+
+/* ── TOUCH DRAG ────────────────────────────────────────── */
+function setupTouch(el,fid){
+  const ghost=document.getElementById('drag-ghost');
+  let active=false;
+  el.addEventListener('touchstart',e=>{
+    if(el.classList.contains('in-memory')||el.classList.contains('lf')||el.classList.contains('locked')) return;
+    active=true;
+    const t=e.touches[0];
+    ghost.textContent=el.textContent;
+    ghost.style.display='block';
+    ghost.style.left=(t.clientX-70)+'px';
+    ghost.style.top=(t.clientY-22)+'px';
+  },{passive:true});
+  el.addEventListener('touchmove',e=>{
+    if(!active) return;
+    const t=e.touches[0];
+    ghost.style.left=(t.clientX-70)+'px';
+    ghost.style.top=(t.clientY-22)+'px';
+  },{passive:true});
+  el.addEventListener('touchend',e=>{
+    if(!active) return;
+    active=false; ghost.style.display='none';
+    const t=e.changedTouches[0];
+    const target=document.elementFromPoint(t.clientX,t.clientY);
+    const cl=document.getElementById('memory-cloud');
+    if(cl===target||cl.contains(target)) handleDrop(fid);
+  });
+}
+
+/* ── ACCUSE ────────────────────────────────────────────── */
+function openAccuse(){
+  document.getElementById('accuse-modal').classList.add('open');
+  document.getElementById('accuse-input').value='';
+  document.getElementById('accuse-result').textContent='';
+  setTimeout(()=>document.getElementById('accuse-input').focus(),60);
+}
+function closeAccuse(){document.getElementById('accuse-modal').classList.remove('open');}
+function processAccuse(){
+  const raw=document.getElementById('accuse-input').value;
+  const inp=raw.toLowerCase().trim();
+  const res=document.getElementById('accuse-result');
+  const t=memText();
+  const hasSc=t.includes('scarf');
+  const hasMi=t.includes('midnight');
+  const nameOk=inp.includes('red scarf')||inp.includes('scarf burglar')||inp==='the red scarf burglar';
+  // Win: name contains "red scarf", or has scarf keyword in name + midnight either in memory or name
+  if(nameOk||(inp.includes('scarf')&&(hasMi||inp.includes('midnight')))){
+    res.className='ok'; res.textContent='✓ CORRECT! The Red Scarf Burglar is apprehended!';
+    S.caseSolved=true;
+    setTimeout(()=>{closeAccuse();endGame(true);},1400);
+  } else if(S.memFacts.length<2){
+    res.className='fail'; res.textContent='✗ Not enough evidence yet. Add more facts to memory.';
+  } else {
+    res.className='fail'; res.textContent='✗ Wrong suspect. Keep investigating.';
+  }
+}
+
+/* ── END GAME ──────────────────────────────────────────── */
+function endGame(solved){
+  S.phase='end'; S.caseSolved=solved;
+  const {score,rank}=calcScore();
+  document.getElementById('screen-game').style.display='none';
+  document.getElementById('tut-panel').classList.add('hidden');
+  document.body.classList.remove('tut-active');
+  const es=document.getElementById('screen-end');
+  es.style.display='flex';
+  const tl=document.getElementById('end-title');
+  tl.textContent=solved?'✓ CASE CLOSED':'✗ COLD CASE';
+  tl.className=solved?'solved':'unsolved';
+  document.getElementById('end-score').textContent=score+' pts';
+  document.getElementById('end-rank').textContent=rank;
+  document.getElementById('s-solved').textContent=solved?'YES':'NO';
+  document.getElementById('s-queries').textContent=`${S.queryCount} / ${S.maxQueries}`;
+  document.getElementById('s-peak').textContent=`${S.peakToken} / ${S.tokenLimit} tokens`;
+  document.getElementById('s-sum').textContent=S.usedSummarize?'YES (+15 pts)':'NO';
+}
+function calcScore(){
+  let sc=0;
+  if(S.caseSolved) sc+=50;
+  sc+=Math.max(0,S.maxQueries-S.queryCount)*5;
+  sc+=Math.floor((1-S.peakToken/S.tokenLimit)*20);
+  if(S.usedSummarize) sc+=15;
+  const rank=sc>=85?'★★★ MASTER DETECTIVE ★★★':sc>=65?'★★ SENIOR DETECTIVE ★★':sc>=45?'★ DETECTIVE ★':'◦ CADET ◦';
+  return{score:sc,rank};
+}
+
+/* ── INIT ──────────────────────────────────────────────── */
+function initTutorial(){
+  Object.assign(S,{
+    phase:'tutorial',tutStep:0,t4WaitedQuery:false,t5Phase:'click_summarize',
+    memFacts:[],tokenUsage:0,tokenLimit:TUT_CFG.tokenLimit,factCost:TUT_CFG.factCost,
+    queryCount:0,maxQueries:TUT_CFG.maxQueries,
+    isSummarizing:false,sumSelected:[],selectedFact:null,
+    peakToken:0,usedSummarize:false,caseSolved:false,
+    locked:new Set(),draggingId:null,
+  });
+  S.cfFacts=TUT_CFG.facts.map(f=>({...f,cost:TUT_CFG.factCost,inMemory:false}));
+
+  document.getElementById('screen-game').style.display='flex';
+  document.getElementById('screen-end').style.display='none';
+  document.getElementById('tut-panel').classList.remove('hidden');
+  document.getElementById('tut-start-wrap').style.display='none';
+  document.getElementById('btn-accuse').style.display='none';
+  document.getElementById('qCounter').style.display='none';
+  document.getElementById('chat-log').innerHTML='';
+  document.body.classList.add('tut-active');
+
+  exitSumMode();
+  renderCF(); renderCloud(); updateBar(); updateQCounter();
+  enterTutStep(0);
+}
+
+function initGame(){
+  Object.assign(S,{
+    phase:'game',
+    memFacts:[],tokenUsage:0,tokenLimit:GAME_CFG.tokenLimit,factCost:GAME_CFG.factCost,
+    queryCount:0,maxQueries:GAME_CFG.maxQueries,
+    isSummarizing:false,sumSelected:[],selectedFact:null,
+    peakToken:0,usedSummarize:false,caseSolved:false,
+    locked:new Set(),draggingId:null,
+  });
+  S.cfFacts=GAME_CFG.facts.map(f=>({...f,cost:GAME_CFG.factCost,inMemory:false}));
+
+  document.getElementById('tut-panel').classList.add('hidden');
+  document.body.classList.remove('tut-active');
+  document.getElementById('screen-game').style.display='flex';
+  document.getElementById('screen-end').style.display='none';
+  const acb=document.getElementById('btn-accuse');
+  acb.style.display='inline-block'; acb.disabled=true;
+  document.getElementById('qCounter').style.display='block';
+  document.getElementById('chat-log').innerHTML='';
+
+  // Clear any locked classes left over from tutorial
+  ['chat-input','btn-submit','btn-summarize','btn-confirm-merge'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    el.classList.remove('locked');
+    if(el.tagName==='BUTTON') el.disabled=false;
+  });
+  clearHL();
+  exitSumMode();
+  renderCF(); renderCloud(); updateBar(); updateQCounter();
+
+  addChat('ai',"Detective... I remember so little. A theft — a blue diamond necklace. You must help me recall. Share the case files with me.");
+  addChat('sys','THE THEFT OF THE BLUE DIAMOND NECKLACE | Budget: 200 tokens | 10 queries');
+}
+
+/* ── EVENTS ────────────────────────────────────────────── */
+function setupEvents(){
+  document.getElementById('btn-tut-next').addEventListener('click',advanceTut);
+  document.getElementById('btn-start-game').addEventListener('click',initGame);
+  document.getElementById('btn-replay').addEventListener('click',initTutorial);
+
+  document.getElementById('btn-submit').addEventListener('click',()=>{
+    if(S.locked.has('btn-submit')) return;
+    const v=document.getElementById('chat-input').value.trim();
+    if(v) submitQuery(v);
+  });
+  document.getElementById('chat-input').addEventListener('keydown',e=>{
+    if(e.key==='Enter'&&!S.locked.has('btn-submit')){
+      const v=document.getElementById('chat-input').value.trim();
+      if(v) submitQuery(v);
+    }
+  });
+
+  document.getElementById('btn-summarize').addEventListener('click',()=>{
+    if(S.locked.has('btn-summarize')) return;
+    if(S.isSummarizing){ exitSumMode(); return; }
+    enterSumMode();
+    // Tutorial tracking
+    if(S.phase==='tutorial'&&S.tutStep===5&&S.t5Phase==='click_summarize'){
+      S.t5Phase='select_facts';
+      setTutMsg(TUT_STEPS[5].title,
+        'Now click two facts in the memory cloud (the glowing bubbles) to select them.',false);
+      lockEl('chat-input'); lockEl('btn-submit');
+    }
+  });
+  document.getElementById('btn-confirm-merge').addEventListener('click',()=>{
+    if(S.phase==='tutorial'&&S.tutStep===5) S.t5Phase='confirm_merge';
+    confirmMerge();
+  });
+  document.getElementById('btn-cancel-sum').addEventListener('click',exitSumMode);
+
+  document.getElementById('btn-accuse').addEventListener('click',openAccuse);
+  document.getElementById('btn-accuse-ok').addEventListener('click',processAccuse);
+  document.getElementById('btn-accuse-cancel').addEventListener('click',closeAccuse);
+  document.getElementById('accuse-input').addEventListener('keydown',e=>{
+    if(e.key==='Enter') processAccuse();
+    if(e.key==='Escape') closeAccuse();
+  });
+
+  setupDropZone();
+}
+
+/* ── BOOT ──────────────────────────────────────────────── */
+setupEvents();
+initTutorial();
+</script>
+</body>
+</html>

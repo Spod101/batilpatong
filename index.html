@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1a1a1a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <title>Fading Testimony</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="tut-active">
+
+  <!-- ══ TUTORIAL PANEL ═══════════════════════════════════════ -->
+  <div id="tut-panel">
+    <div id="tut-badge">Training — Step <span id="tut-step-num">0</span></div>
+    <div id="tut-title"></div>
+    <div id="tut-msg"></div>
+    <div id="tut-hint"></div>
+    <div id="tut-ok"></div>
+    <button id="btn-tut-next">Next →</button>
+    <div id="tut-start-wrap">
+      <small>Tutorial complete. Ready for the real case?</small>
+      <button id="btn-start-game">▶ Start Real Case</button>
+    </div>
+  </div>
+
+  <!-- ══ MAIN GAME SCREEN ═════════════════════════════════════ -->
+  <div id="screen-game">
+
+    <!-- Token Bar -->
+    <div id="token-bar-wrap">
+      <div id="tbTitle">Memory</div>
+      <div id="token-bar-track"><div id="token-bar-fill"></div></div>
+      <div id="tbLabel">0 / 140</div>
+      <div id="qCounter" style="display:none">Queries: 0</div>
+    </div>
+
+    <!-- Middle: memory cloud + case file -->
+    <div id="game-middle">
+      <div id="memory-cloud">
+        <div id="mcPlaceholder">Drag facts here<br>to share with the witness</div>
+      </div>
+      <div id="case-file">
+        <div id="cfTitle">Case File</div>
+      </div>
+    </div>
+
+    <!-- Chat Area -->
+    <div id="chat-area">
+      <div id="chat-log"></div>
+      <div id="chat-controls">
+        <div id="chat-input-row">
+          <input id="chat-input" type="text" placeholder="Ask the witness…" autocomplete="off">
+          <button id="btn-submit">Submit</button>
+        </div>
+        <div id="chat-btn-row">
+          <button id="btn-summarize">Summarize</button>
+          <button id="btn-confirm-merge">Confirm Merge</button>
+          <button id="btn-cancel-sum">Cancel</button>
+          <button id="btn-accuse" disabled style="display:none">Accuse</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ACCUSE MODAL ══════════════════════════════════════════ -->
+  <div id="accuse-modal">
+    <div id="accuse-box">
+      <h2>⚖ FILE YOUR ACCUSATION</h2>
+      <div style="font-size:10px;color:#5a4a2a">Name the thief. Make it stick.</div>
+      <input id="accuse-input" type="text" placeholder="Enter suspect name…">
+      <div id="accuse-result"></div>
+      <div class="ab-row">
+        <button id="btn-accuse-ok" style="border-color:#ff3a3a;color:#ff3a3a">Accuse</button>
+        <button id="btn-accuse-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ END SCREEN ════════════════════════════════════════════ -->
+  <div id="screen-end">
+    <div id="end-title">CASE CLOSED</div>
+    <div id="end-score">0 pts</div>
+    <div id="end-rank">CADET</div>
+    <div id="end-stats">
+      <div class="sr"><span class="sl">Case Solved</span><span class="sv" id="s-solved">—</span></div>
+      <div class="sr"><span class="sl">Queries Used</span><span class="sv" id="s-queries">—</span></div>
+      <div class="sr"><span class="sl">Peak Memory</span><span class="sv" id="s-peak">—</span></div>
+      <div class="sr"><span class="sl">Summarize Used</span><span class="sv" id="s-sum">—</span></div>
+    </div>
+    <div id="end-leaderboard">
+      <div class="lb-title">Top Detectives</div>
+      <div id="lb-list"></div>
+    </div>
+    <div id="end-share"></div>
+    <button id="btn-replay">↺ Play Again</button>
+  </div>
+
+  <!-- Touch drag ghost -->
+  <div id="drag-ghost"></div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
