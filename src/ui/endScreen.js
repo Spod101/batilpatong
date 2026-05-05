@@ -1,7 +1,7 @@
 import { esc } from './helpers.js';
 import { SUSPECTS } from '../game/suspects.js';
 
-export function showEndScreen({ solved, queryCount, maxQueries, peakToken, tokenLimit,
+export function showEndScreen({ solved, queryCount, queryTokenUsed, queryTokenLimit, peakToken, tokenLimit,
                                 usedSummarize, score, rank, accusedId, promptHistory }) {
   document.getElementById('screen-game').style.display  = 'none';
   document.getElementById('screen-landing').style.display = 'none';
@@ -16,15 +16,15 @@ export function showEndScreen({ solved, queryCount, maxQueries, peakToken, token
   document.getElementById('end-score').textContent = score + ' pts';
   document.getElementById('end-rank').textContent  = rank;
   document.getElementById('s-solved').textContent  = solved ? 'YES' : 'NO';
-  document.getElementById('s-queries').textContent = `${queryCount} / ${maxQueries}`;
+  document.getElementById('s-queries').textContent = `${queryTokenUsed} / ${queryTokenLimit}t`;
   document.getElementById('s-peak').textContent    = `${peakToken} / ${tokenLimit} tokens`;
   document.getElementById('s-sum').textContent     = usedSummarize ? 'YES (+15 pts)' : 'NO';
 
   const pct = Math.round((1 - peakToken / tokenLimit) * 100);
   document.getElementById('end-share').textContent =
     solved
-      ? `You solved the case in ${queryCount} ${queryCount === 1 ? 'query' : 'queries'} using ${100 - pct}% of your token budget.`
-      : `The case went cold after ${queryCount} ${queryCount === 1 ? 'query' : 'queries'}. Review the evidence next time.`;
+      ? `You solved the case using ${queryTokenUsed} interrogation tokens and ${100 - pct}% of your memory budget.`
+      : `The case went cold after ${queryTokenUsed} interrogation tokens. Review the evidence next time.`;
 
   // ── Culprit reveal ───────────────────────────────────
   const guilty  = SUSPECTS.find(s => s.guilty);
@@ -120,7 +120,7 @@ export function renderLeaderboard(entries) {
     const tok = e.sessionToken ? e.sessionToken.substring(0, 8) : 'anon';
     const row = document.createElement('div');
     row.className = 'sr';
-    row.innerHTML = `<span class="sl">#${i + 1} ${tok}…</span><span class="sv">${e.score} pts (${e.queriesUsed}q)</span>`;
+    row.innerHTML = `<span class="sl">#${i + 1} ${tok}…</span><span class="sv">${e.score} pts (${e.queriesUsed}t)</span>`;
     list.appendChild(row);
   });
 }

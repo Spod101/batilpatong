@@ -80,7 +80,10 @@ export function mergeFacts(id1, id2) {
 export function calcScore() {
   let sc = 0;
   if (S.caseSolved) sc += 50;
-  sc += Math.max(0, S.maxQueries - S.queryCount) * 5;
+  if (S.queryTokenLimit > 0) {
+    const ratio = Math.min(1, S.queryTokenUsed / S.queryTokenLimit);
+    sc += Math.floor((1 - ratio) * 50);
+  }
   sc += Math.floor((1 - S.peakToken / S.tokenLimit) * 20);
   if (S.usedSummarize) sc += 15;
   if (S.eliminatedIds && S.eliminatedIds.size > 0) sc += Math.min(S.eliminatedIds.size * 3, 12);

@@ -32,6 +32,11 @@ export function handleDrop(fid) {
 export function eliminateSuspect(id) {
   if (S.eliminatedIds.has(id)) return;
   S.eliminatedIds.add(id);
+  if (S.eliminationBonus > 0) {
+    S.queryTokenLimit += S.eliminationBonus;
+    addChat('sys', `Bonus +${S.eliminationBonus} interrogation tokens for eliminating a suspect.`);
+    updateQCounter();
+  }
   renderSuspects();
   addChat('sys', `${SUSPECTS.find(s => s.id === id)?.name ?? id} eliminated from consideration.`);
   _persistGameState();
@@ -48,7 +53,8 @@ export async function endGame(solved) {
     await saveSession({
       tutorialCompleted: true,
       caseSolved: solved,
-      queriesUsed: S.queryCount,
+      queriesUsed: S.queryTokenUsed,
+      queryCount: S.queryCount,
       peakTokens: S.peakToken,
       summarizeUsed: S.usedSummarize,
       accusedId: S.accusedId,
@@ -62,7 +68,8 @@ export async function endGame(solved) {
   showEndScreen({
     solved,
     queryCount: S.queryCount,
-    maxQueries: S.maxQueries,
+    queryTokenUsed: S.queryTokenUsed,
+    queryTokenLimit: S.queryTokenLimit,
     peakToken: S.peakToken,
     tokenLimit: S.tokenLimit,
     usedSummarize: S.usedSummarize,
@@ -90,7 +97,9 @@ export function initGame(savedState) {
       tokenLimit: savedState.tokenLimit || GAME_CFG.tokenLimit,
       factCost: savedState.factCost || GAME_CFG.factCost,
       queryCount: savedState.queryCount || 0,
-      maxQueries: savedState.maxQueries || GAME_CFG.maxQueries,
+      queryTokenUsed: savedState.queryTokenUsed || 0,
+      queryTokenLimit: savedState.queryTokenLimit || GAME_CFG.queryTokenLimit,
+      eliminationBonus: savedState.eliminationBonus || GAME_CFG.eliminationBonus,
       isSummarizing: false,
       sumSelected: [],
       selectedFact: null,
@@ -114,7 +123,9 @@ export function initGame(savedState) {
       tokenLimit: GAME_CFG.tokenLimit,
       factCost: GAME_CFG.factCost,
       queryCount: 0,
-      maxQueries: GAME_CFG.maxQueries,
+      queryTokenUsed: 0,
+      queryTokenLimit: GAME_CFG.queryTokenLimit,
+      eliminationBonus: GAME_CFG.eliminationBonus,
       isSummarizing: false,
       sumSelected: [],
       selectedFact: null,
@@ -141,7 +152,7 @@ export function initGame(savedState) {
 
   const acb = document.getElementById('btn-accuse');
   acb.style.display = 'inline-block';
-  acb.disabled = true;
+  acb.disabled = false;
   document.getElementById('qCounter').style.display = 'block';
   document.getElementById('chat-log').innerHTML = '';
 
@@ -163,17 +174,12 @@ export function initGame(savedState) {
   S.isSummarizing  = false;
   S.sumSelected    = [];
 
-  // Accuse enabled if resuming with ≥3 queries
-  if (S.queryCount >= 3) {
-    document.getElementById('btn-accuse').disabled = false;
-  }
-
   renderCF(); renderCloud(); updateBar(); updateQCounter();
   renderSuspects();
 
   if (!savedState) {
     addChat('ai', "Detective... I remember so little. A theft — a blue diamond necklace. You must help me recall. Share the case files with me.");
-    addChat('sys', 'THE THEFT OF THE BLUE DIAMOND NECKLACE | Budget: 200t | 10 queries | 5 suspects');
+    addChat('sys', `THE THEFT OF THE BLUE DIAMOND NECKLACE | Memory: ${S.tokenLimit}t | Interrogation: ${S.queryTokenLimit}t | 5 suspects`);
   } else {
     addChat('sys', '— Case resumed —');
   }
@@ -188,7 +194,9 @@ function _persistGameState() {
     tokenLimit: S.tokenLimit,
     factCost: S.factCost,
     queryCount: S.queryCount,
-    maxQueries: S.maxQueries,
+    queryTokenUsed: S.queryTokenUsed,
+    queryTokenLimit: S.queryTokenLimit,
+    eliminationBonus: S.eliminationBonus,
     peakToken: S.peakToken,
     usedSummarize: S.usedSummarize,
     suspects: S.suspects,

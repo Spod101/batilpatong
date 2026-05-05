@@ -15,9 +15,11 @@ export function clearChat() {
 
 export function updateQCounter() {
   const el = document.getElementById('qCounter');
-  el.textContent = S.phase === 'game'
-    ? `Queries: ${S.queryCount} / ${S.maxQueries}`
-    : `Queries: ${S.queryCount}`;
+  if (S.phase === 'game') {
+    el.textContent = `Interrogation: ${S.queryTokenUsed} / ${S.queryTokenLimit}t`;
+  } else {
+    el.textContent = `Interrogation: ${S.queryTokenUsed}t`;
+  }
 }
 
 export function getInputValue() {

@@ -1,7 +1,8 @@
 export const TUT_CFG = {
   tokenLimit: 140,
   factCost: 50,
-  maxQueries: 999,
+  queryTokenLimit: 999,
+  eliminationBonus: 0,
   facts: [
     { id: 'tut_glove',   text: 'The thief wore a glove on their left hand.' },
     { id: 'tut_midnight', text: 'The theft happened at midnight.' },
@@ -12,7 +13,8 @@ export const TUT_CFG = {
 export const GAME_CFG = {
   tokenLimit: 200,
   factCost: 40,
-  maxQueries: 10,
+  queryTokenLimit: 120,
+  eliminationBonus: 20,
   facts: [
     { id: 'scarf',    text: 'A witness saw the thief wearing a red scarf.' },
     { id: 'midnight', text: 'Theft at midnight — jazz club closed at 11 PM.' },
@@ -65,7 +67,9 @@ export const S = {
   tokenLimit: 140,
   factCost: 50,
   queryCount: 0,
-  maxQueries: 999,
+  queryTokenUsed: 0,
+  queryTokenLimit: 999,
+  eliminationBonus: 0,
   isSummarizing: false,
   sumSelected: [],
   selectedFact: null,

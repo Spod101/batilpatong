@@ -120,6 +120,13 @@ function doConfirmMerge() {
 function submitQuery(txt) {
   if (!txt.trim()) return;
 
+  const tokCost = txt.trim().split(/\s+/).filter(Boolean).length * 2;
+  if (S.phase === 'game' && S.queryTokenUsed + tokCost > S.queryTokenLimit) {
+    const bonus = S.eliminationBonus > 0 ? ` Eliminate a suspect to gain +${S.eliminationBonus}t or accuse now.` : ' Accuse now.';
+    addChat('sys', `Not enough interrogation tokens for that question.${bonus}`);
+    return;
+  }
+
   const forgotIds = applyPromptOverflow(txt);
   if (forgotIds.length) {
     animateForgot(forgotIds, () => { renderCloud(); renderCF(); updateBar(); });
@@ -131,7 +138,7 @@ function submitQuery(txt) {
   clearInput();
 
   const resp = aiRespond(txt);
-  const tokCost = txt.trim().split(/\s+/).filter(Boolean).length * 2;
+  S.queryTokenUsed += tokCost;
 
   // Track prompt history for game phase
   if (S.phase === 'game') {
@@ -153,11 +160,7 @@ function submitQuery(txt) {
     addChat('ai', resp);
     if (S.phase === 'tutorial') tutQueryDone();
     if (S.phase === 'game') {
-      if (S.queryCount >= 3) document.getElementById('btn-accuse').disabled = false;
       persistGameState();
-      if (S.queryCount >= S.maxQueries && !S.caseSolved) {
-        setTimeout(() => endGame(false), 1000);
-      }
     }
   }, 580);
 }
