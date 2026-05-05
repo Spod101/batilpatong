@@ -30,10 +30,12 @@ function tutorialRespond() {
 }
 
 // ── Suspect-specific responses ───────────────────────────
-function respondAboutSuspect(susp, hasSc, hasMi, hasGu, hasNk) {
+function respondAboutSuspect(susp, hasSc, hasMi, hasGu, hasNk, hasCr) {
   if (susp.id === 'victor') {
+    if (hasSc && hasMi && hasCr)
+      return 'Victor Crane... the red scarf... midnight... the crash before the alarm. His alibi collapses. I am certain — it was Crane.';
     if (hasSc && hasMi)
-      return 'Victor Crane... the red scarf... midnight... the jazz club was shut by then. His alibi collapses. I am certain — it was Crane.';
+      return 'The scarf and the midnight timeline point to Crane, but the crash detail is missing. I need the final link.';
     if (hasSc)
       return "Victor Crane always wore that scarf. Unmistakable. But when did he strike? I need the timeline.";
     if (hasMi)
@@ -89,13 +91,17 @@ function gameRespond(queryText) {
     return parts.some(p => q.includes(p)) || q.includes(s.role.toLowerCase());
   });
 
-  if (namedSusp) return respondAboutSuspect(namedSusp, hasSc, hasMi, hasGu, hasNk);
+  if (namedSusp) return respondAboutSuspect(namedSusp, hasSc, hasMi, hasGu, hasNk, hasCr);
 
   // General memory-based response
+  if (hasSc && hasMi && hasCr) return pick([
+    "A figure in a red scarf... past midnight... the crash right before the alarm. Victor Crane had no alibi. I am certain it was him.",
+    "Red scarf at midnight, crash at 11:58. The Blue Note shut at eleven. Only one man wore that scarf — Victor Crane.",
+    "The scarf, the hour, the crash. It all aligns on one name. Victor Crane. I see it clearly now.",
+  ]);
   if (hasSc && hasMi) return pick([
-    "A figure in a red scarf... past midnight... the jazz club was already closed. Victor Crane had no alibi. I am certain it was him.",
-    "Red scarf at midnight. The Blue Note shut at eleven. Only one man wore that scarf — Victor Crane.",
-    "The scarf and the hour align on one name. Victor Crane. I see it clearly now.",
+    "The scarf and the hour point to someone, but I need the final trigger — the crash detail or another anchor.",
+    "Red scarf at midnight, but something is missing. A final clue would lock the name in place.",
   ]);
   if (hasSc && (t.includes('pawn') || t.includes('crane') || t.includes('ashford'))) return pick([
     "The red scarf... and the fabric near Crane's shop... the same pattern. The same man.",

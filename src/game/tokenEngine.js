@@ -6,7 +6,8 @@ export function memText() {
 }
 
 export function promptTokens(txt) {
-  return countTokens(txt);
+  const base = countTokens(txt);
+  return Math.ceil(base * 1.5);
 }
 
 // Returns { added: bool, forgotIds: string[] }

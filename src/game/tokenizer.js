@@ -29,6 +29,7 @@ export function countTokens(text) {
 
 export function countTokensForFact(text, fallback) {
   const ct = countTokens(text);
-  if (ct > 0) return ct;
-  return fallback || 1;
+  const base = ct > 0 ? ct : 0;
+  const minCost = fallback || 1;
+  return Math.max(base, minCost);
 }

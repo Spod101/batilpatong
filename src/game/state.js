@@ -11,9 +11,9 @@ export const TUT_CFG = {
 };
 
 export const GAME_CFG = {
-  tokenLimit: 200,
+  tokenLimit: 170,
   factCost: 40,
-  queryTokenLimit: 120,
+  queryTokenLimit: 90,
   eliminationBonus: 20,
   facts: [
     { id: 'scarf',    text: 'A witness saw the thief wearing a red scarf.' },
@@ -23,6 +23,8 @@ export const GAME_CFG = {
     { id: 'necklace', text: 'Blue Diamond Necklace ($2M) taken from locked display.' },
     { id: 'window',   text: 'East window found unlocked from the inside.' },
     { id: 'pawnshop', text: 'Red fabric snagged near Crane\'s pawn shop on Ashford.' },
+    { id: 'valet',    text: 'A valet saw a blue sedan idling outside near closing.' },
+    { id: 'lights',   text: 'Gallery lights flickered shortly before the alarm.' },
   ],
 };
 

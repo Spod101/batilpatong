@@ -121,6 +121,10 @@ function submitQuery(txt) {
   if (!txt.trim()) return;
 
   const tokCost = promptTokens(txt);
+  if (tokCost > S.tokenLimit) {
+    addChat('sys', 'That question is too long for the witness to process. Shorten it.');
+    return;
+  }
   if (S.phase === 'game' && S.queryTokenUsed + tokCost > S.queryTokenLimit) {
     const bonus = S.eliminationBonus > 0 ? ` Eliminate a suspect to gain +${S.eliminationBonus}t or accuse now.` : ' Accuse now.';
     addChat('sys', `Not enough interrogation tokens for that question.${bonus}`);
@@ -136,6 +140,11 @@ function submitQuery(txt) {
 
   addChat('player', txt);
   clearInput();
+
+  // Prompt tokens temporarily consume memory budget during the response.
+  S.tokenUsage += tokCost;
+  if (S.tokenUsage > S.peakToken) S.peakToken = S.tokenUsage;
+  updateBar();
 
   const resp = aiRespond(txt);
   S.queryTokenUsed += tokCost;
@@ -158,6 +167,8 @@ function submitQuery(txt) {
 
   setTimeout(() => {
     addChat('ai', resp);
+    S.tokenUsage = Math.max(0, S.tokenUsage - tokCost);
+    updateBar();
     if (S.phase === 'tutorial') tutQueryDone();
     if (S.phase === 'game') {
       persistGameState();
@@ -193,11 +204,12 @@ function processAccuse() {
   const mtext  = S.memFacts.map(f => f.text.toLowerCase()).join(' ');
   const hasSc  = mtext.includes('scarf') || mtext.includes('crane') || mtext.includes('pawn');
   const hasMi  = mtext.includes('midnight') || mtext.includes('11 pm') || mtext.includes('jazz');
+  const hasCr  = mtext.includes('crash');
 
   S.accusedId = id;
 
   if (id === 'victor') {
-    if (hasSc || hasMi) {
+    if (hasSc && hasMi && hasCr) {
       res.className   = 'ok';
       res.textContent = '✓ CORRECT! Victor Crane is apprehended!';
       S.caseSolved    = true;
@@ -207,7 +219,7 @@ function processAccuse() {
       res.textContent = '✗ You lack the evidence to make this charge stick. Add key clues to memory.';
     }
   } else {
-    if (!hasSc && !hasMi) {
+    if (!hasSc || !hasMi || !hasCr) {
       res.className   = 'fail';
       res.textContent = '✗ Not enough evidence yet. Investigate further before accusing.';
     } else {
