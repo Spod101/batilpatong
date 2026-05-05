@@ -1,5 +1,6 @@
 import { S, TUT_CFG } from './state.js';
 import { addFact }    from './tokenEngine.js';
+import { countTokensForFact } from './tokenizer.js';
 import { aiRespond }  from './aiWitness.js';
 import { updateBar }  from '../ui/tokenBar.js';
 import { renderCloud, animateForgot } from '../ui/memoryCloud.js';
@@ -256,7 +257,11 @@ export function initTutorial() {
     accusedId: null,
     selectedAccuseId: null,
   });
-  S.cfFacts = TUT_CFG.facts.map(f => ({ ...f, cost: TUT_CFG.factCost, inMemory: false }));
+  S.cfFacts = TUT_CFG.facts.map(f => ({
+    ...f,
+    cost: countTokensForFact(f.text, TUT_CFG.factCost),
+    inMemory: false,
+  }));
 
   document.getElementById('screen-landing').style.display = 'none';
   document.getElementById('screen-game').style.display    = 'flex';

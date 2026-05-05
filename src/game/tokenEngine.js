@@ -1,11 +1,12 @@
 import { S, MERGE_TABLE } from './state.js';
+import { countTokens } from './tokenizer.js';
 
 export function memText() {
   return S.memFacts.map(f => f.text.toLowerCase()).join(' ');
 }
 
 export function promptTokens(txt) {
-  return txt.trim().split(/\s+/).filter(Boolean).length * 2;
+  return countTokens(txt);
 }
 
 // Returns { added: bool, forgotIds: string[] }
@@ -59,7 +60,7 @@ export function mergeFacts(id1, id2) {
   const mtext = MERGE_TABLE[`${id1}+${id2}`] ||
     (f1.text.substring(0, 18) + '… & ' + f2.text.substring(0, 18) + '…').substring(0, 44);
   const oldCost = f1.cost + f2.cost;
-  const newCost = 60;
+  const newCost = countTokens(mtext);
 
   S.memFacts = S.memFacts.filter(f => f.id !== id1 && f.id !== id2);
   S.tokenUsage -= oldCost;
@@ -98,7 +99,7 @@ export function calcScore() {
 // ── Prompt analysis ──────────────────────────────────────
 export function analyzePrompt(prompt, prevPrompts) {
   const words = prompt.trim().split(/\s+/).filter(Boolean);
-  const tokCost = words.length * 2;
+  const tokCost = countTokens(prompt);
   const issues = [];
   let improved = null;
 

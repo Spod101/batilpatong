@@ -1,6 +1,7 @@
 import { S, GAME_CFG } from './state.js';
 import { SUSPECTS } from './suspects.js';
 import { addFact, calcScore } from './tokenEngine.js';
+import { countTokensForFact } from './tokenizer.js';
 import { updateBar }  from '../ui/tokenBar.js';
 import { renderCloud, animateForgot } from '../ui/memoryCloud.js';
 import { renderCF }   from '../ui/caseFile.js';
@@ -114,7 +115,11 @@ export function initGame(savedState) {
       accusedId: null,
       selectedAccuseId: null,
     });
-    S.cfFacts = savedState.cfFacts || GAME_CFG.facts.map(f => ({ ...f, cost: GAME_CFG.factCost, inMemory: false }));
+    S.cfFacts = savedState.cfFacts || GAME_CFG.facts.map(f => ({
+      ...f,
+      cost: countTokensForFact(f.text, GAME_CFG.factCost),
+      inMemory: false,
+    }));
   } else {
     Object.assign(S, {
       phase: 'game',
@@ -140,7 +145,11 @@ export function initGame(savedState) {
       accusedId: null,
       selectedAccuseId: null,
     });
-    S.cfFacts = GAME_CFG.facts.map(f => ({ ...f, cost: GAME_CFG.factCost, inMemory: false }));
+    S.cfFacts = GAME_CFG.facts.map(f => ({
+      ...f,
+      cost: countTokensForFact(f.text, GAME_CFG.factCost),
+      inMemory: false,
+    }));
   }
 
   // Show game screen

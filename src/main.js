@@ -1,6 +1,6 @@
 import './styles/main.css';
 import { S } from './game/state.js';
-import { applyPromptOverflow, mergeFacts, ageMemory, analyzePrompt } from './game/tokenEngine.js';
+import { applyPromptOverflow, mergeFacts, ageMemory, analyzePrompt, promptTokens } from './game/tokenEngine.js';
 import { aiRespond } from './game/aiWitness.js';
 
 import {
@@ -120,7 +120,7 @@ function doConfirmMerge() {
 function submitQuery(txt) {
   if (!txt.trim()) return;
 
-  const tokCost = txt.trim().split(/\s+/).filter(Boolean).length * 2;
+  const tokCost = promptTokens(txt);
   if (S.phase === 'game' && S.queryTokenUsed + tokCost > S.queryTokenLimit) {
     const bonus = S.eliminationBonus > 0 ? ` Eliminate a suspect to gain +${S.eliminationBonus}t or accuse now.` : ' Accuse now.';
     addChat('sys', `Not enough interrogation tokens for that question.${bonus}`);
