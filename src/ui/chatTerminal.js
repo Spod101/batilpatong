@@ -9,6 +9,23 @@ export function addChat(role, txt) {
   log.scrollTop = log.scrollHeight;
 }
 
+export function addChatPending() {
+  const log = document.getElementById('chat-log');
+  const m   = document.createElement('div');
+  m.className = 'chat-msg ai pending';
+  m.textContent = '. . .';
+  log.appendChild(m);
+  log.scrollTop = log.scrollHeight;
+  return m;
+}
+
+export function resolveChatPending(el, txt) {
+  el.classList.remove('pending');
+  el.textContent = txt;
+  const log = document.getElementById('chat-log');
+  log.scrollTop = log.scrollHeight;
+}
+
 export function clearChat() {
   document.getElementById('chat-log').innerHTML = '';
 }

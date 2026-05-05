@@ -1,7 +1,7 @@
 import './styles/main.css';
 import { S } from './game/state.js';
 import { applyPromptOverflow, mergeFacts, ageMemory, decayMemory, analyzePrompt, promptTokens } from './game/tokenEngine.js';
-import { aiRespond } from './game/aiWitness.js';
+import { aiRespondAsync } from './game/aiWitness.js';
 
 import {
   initTutorial, advanceTut, isTutAllowed,
@@ -13,7 +13,7 @@ import { initGame, handleDrop as gameDrop, endGame, eliminateSuspect, persistGam
 import { updateBar }  from './ui/tokenBar.js';
 import { renderCloud, animateForgot, setupDropZone } from './ui/memoryCloud.js';
 import { renderCF }   from './ui/caseFile.js';
-import { addChat, updateQCounter, getInputValue, clearInput } from './ui/chatTerminal.js';
+import { addChat, addChatPending, resolveChatPending, updateQCounter, getInputValue, clearInput } from './ui/chatTerminal.js';
 import { tutHint, setTutMsg } from './ui/tutorialPanel.js';
 import { renderSuspects, renderAccuseSuspects } from './ui/suspectPanel.js';
 import {
@@ -117,7 +117,7 @@ function doConfirmMerge() {
 }
 
 // ── Query submission ─────────────────────────────────────
-function submitQuery(txt) {
+async function submitQuery(txt) {
   if (!txt.trim()) return;
 
   const tokCost = promptTokens(txt);
@@ -141,14 +141,28 @@ function submitQuery(txt) {
   addChat('player', txt);
   clearInput();
 
+  // Lock input while witness is responding
+  S.locked.add('btn-submit');
+  document.getElementById('chat-input').disabled = true;
+
   // Prompt tokens temporarily consume memory budget during the response.
   S.tokenUsage += tokCost;
   const totalNow = S.tokenUsage + (S.systemOverhead || 0);
   if (totalNow > S.peakToken) S.peakToken = totalNow;
   updateBar();
 
-  const resp = aiRespond(txt);
   S.queryTokenUsed += tokCost;
+  S.queryCount++;
+  updateQCounter();
+  ageMemory();
+  const decayForgot = decayMemory();
+  if (S.phase === 'game' && decayForgot.length) {
+    animateForgot(decayForgot, () => { renderCloud(); renderCF(); updateBar(); });
+    addChat('sys', 'Memory fades — the oldest clue slips away.');
+  }
+
+  const pending = addChatPending();
+  const resp = await aiRespondAsync(txt);
 
   // Track prompt history for game phase
   if (S.phase === 'game') {
@@ -162,33 +176,25 @@ function submitQuery(txt) {
     });
   }
 
-  S.queryCount++;
-  updateQCounter();
-  ageMemory();
-  const decayForgot = decayMemory();
-  if (S.phase === 'game' && decayForgot.length) {
-    animateForgot(decayForgot, () => { renderCloud(); renderCF(); updateBar(); });
-    addChat('sys', 'Memory fades — the oldest clue slips away.');
-  }
+  resolveChatPending(pending, resp);
+  S.tokenUsage = Math.max(0, S.tokenUsage - tokCost);
+  updateBar();
 
-  setTimeout(() => {
-    addChat('ai', resp);
-    S.tokenUsage = Math.max(0, S.tokenUsage - tokCost);
-    updateBar();
-    if (S.phase === 'tutorial') tutQueryDone();
-    if (S.phase === 'game') {
-      persistGameState();
-    }
-    checkDeadEnd();
-  }, 580);
+  // Unlock input
+  S.locked.delete('btn-submit');
+  document.getElementById('chat-input').disabled = false;
+  document.getElementById('chat-input').focus();
+
+  if (S.phase === 'tutorial') tutQueryDone();
+  if (S.phase === 'game') persistGameState();
+  checkDeadEnd();
 }
 
 function hasWinEvidence() {
-  const mtext  = S.memFacts.map(f => f.text.toLowerCase()).join(' ');
-  const hasSc  = mtext.includes('scarf') || mtext.includes('crane') || mtext.includes('pawn');
-  const hasMi  = mtext.includes('midnight') || mtext.includes('11 pm') || mtext.includes('jazz');
-  const hasCr  = mtext.includes('crash');
-  return hasSc && hasMi && hasCr;
+  const mtext = S.memFacts.map(f => f.text.toLowerCase()).join(' ');
+  const hasSc = mtext.includes('scarf') || mtext.includes('crane') || mtext.includes('pawn');
+  const hasMi = mtext.includes('midnight') || mtext.includes('11 pm') || mtext.includes('jazz');
+  return hasSc && hasMi;
 }
 
 function canAddAnyFact() {
@@ -250,27 +256,29 @@ function processAccuse() {
   const res = document.getElementById('accuse-result');
   if (!id) { res.className = 'fail'; res.textContent = '◦ Select a suspect first.'; return; }
 
-  const mtext  = S.memFacts.map(f => f.text.toLowerCase()).join(' ');
-  const hasSc  = mtext.includes('scarf') || mtext.includes('crane') || mtext.includes('pawn');
-  const hasMi  = mtext.includes('midnight') || mtext.includes('11 pm') || mtext.includes('jazz');
-  const hasCr  = mtext.includes('crash');
+  const mtext = S.memFacts.map(f => f.text.toLowerCase()).join(' ');
+  const hasSc = mtext.includes('scarf') || mtext.includes('crane') || mtext.includes('pawn');
+  const hasMi = mtext.includes('midnight') || mtext.includes('11 pm') || mtext.includes('jazz');
 
   S.accusedId = id;
 
   if (id === 'victor') {
-    if (hasSc && hasMi && hasCr) {
+    if (hasSc && hasMi) {
       res.className   = 'ok';
       res.textContent = '✓ CORRECT! Victor Crane is apprehended!';
       S.caseSolved    = true;
       setTimeout(() => { closeAccuse(); endGame(true); }, 1400);
     } else {
+      const missing = [];
+      if (!hasSc) missing.push('the red scarf evidence');
+      if (!hasMi) missing.push('the midnight timeline');
       res.className   = 'fail';
-      res.textContent = '✗ You lack the evidence to make this charge stick. Add key clues to memory.';
+      res.textContent = `✗ The charge won't stick. Missing from memory: ${missing.join(' and ')}.`;
     }
   } else {
-    if (!hasSc || !hasMi || !hasCr) {
+    if (!hasSc || !hasMi) {
       res.className   = 'fail';
-      res.textContent = '✗ Not enough evidence yet. Investigate further before accusing.';
+      res.textContent = '✗ Not enough evidence yet. Load the key clues into memory first.';
     } else {
       res.className   = 'fail';
       res.textContent = '✗ Wrong suspect. The evidence points elsewhere.';

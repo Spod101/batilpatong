@@ -463,7 +463,9 @@ body {
 }
 .chat-msg.player { background:#bbdefb; color:#3e2723; align-self:flex-end; border-bottom-right-radius: 0; }
 .chat-msg.ai     { background:#fff9c4; color:#3e2723; align-self:flex-start; border-bottom-left-radius: 0; }
-.chat-msg.ai::before { content:'AGENT: '; color:#c62828; font-size:11px; font-weight: bold; }
+.chat-msg.ai::before { content:'NELL: '; color:#c62828; font-size:11px; font-weight: bold; }
+.chat-msg.ai.pending { opacity: 0.6; font-style: italic; animation: nell-thinking 1s ease-in-out infinite; }
+@keyframes nell-thinking { 0%,100% { opacity:0.4; } 50% { opacity:0.9; } }
 .chat-msg.sys { background:#eaddc5; border:1px dashed #8a6a50; color:#5d4037; font-size:11px; align-self:center; font-style:italic; border-radius:12px; padding:4px 12px; box-shadow:none; }
 
 #chat-controls { display:flex; flex-direction:column; gap:8px; padding:10px 14px; border-top:2px solid #3e2723; background:#eaddc5; flex-shrink:0; }
