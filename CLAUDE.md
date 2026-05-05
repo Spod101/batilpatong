@@ -2,122 +2,131 @@
 
 ## What This Is
 
-A detective puzzle PWA where the player interrogates an AI witness whose memory is deliberately limited by a visible token budget. The core skill being taught is **AI context management** — players must decide what the witness remembers, summarize to save space, and solve the case before running out of queries.
+A detective puzzle PWA where the player interrogates an AI witness whose memory is deliberately limited by a visible token budget. The core skill being taught is **AI context management** — players must decide what the witness remembers, summarize to save space, and solve the case before running out of interrogation tokens.
 
-**Stack:** Vite + Supabase (single-page app, no multi-page routing needed)
-
-The original prototype was a single `fading-testimony.html` file. The production version migrates that to a Vite project with Supabase for persistence (scores, sessions, leaderboard).
+**Stack:** Vite SPA with vanilla JS DOM rendering (React scaffold exists but the game entry is `src/main.js`). Persistence is local via IndexedDB + localStorage. The AI witness is rule-based (no external LLM).
 
 ---
 
 ## Core Mechanic
 
-The witness has a **token budget** (e.g., 200 tokens). Facts dragged into memory consume tokens. When the budget overflows, the **oldest fact is forgotten** (removed from memory with a fade-out animation). The player must:
+The witness has a **memory token budget**. Facts dragged into memory consume tokens. When the budget overflows, the **oldest fact is forgotten** (removed from memory with a fade-out animation). The player must:
 
 1. Strategically load only the most relevant facts into the witness's memory.
 2. Use **Summarize** to merge two facts into one compressed bubble, saving space.
 3. Submit questions to the witness, whose answers are generated only from what is currently in memory.
-4. **Accuse** the correct thief before running out of queries.
+4. **Accuse** the correct suspect before running out of interrogation tokens.
 
-Token costs:
-- Each fact dragged in: **40 tokens**
-- Each word typed in the prompt: **2 tokens** (released after AI responds)
-- Summarize merge overhead: **20 tokens** (net saving: 80 → 60 per merge)
+Token behavior:
+- Fact cost is based on `js-tiktoken` counts with a fallback word count; each fact has a minimum cost floor.
+- Prompt tokens are `ceil(countTokens(prompt) * 1.5)` and **temporarily** consume the memory budget during the response.
+- A system overhead value is always included in memory usage.
+- If memory usage would exceed the budget, the oldest facts are dropped first.
 
-If `prompt words + stored facts > budget`, oldest facts are dropped before the AI processes the question.
+Summarize behavior:
+- Merges two facts into one merged bubble (merge table first, then truncated fallback).
+- Merged cost is recalculated from the merged text.
+- In the main game, summaries are **lossy**: there is a 25% chance a key keyword is dropped.
+
+Memory decay:
+- Every N queries (main game uses 2), the oldest memory bubble fades out.
+- Bubbles age; after 3 queries they are marked as stale.
+
+Interrogation tokens:
+- The main game uses a separate interrogation token budget (prompt token cost only).
+- Eliminating a suspect grants bonus interrogation tokens.
+- Dead-end warnings trigger when the player is about to run out of options.
 
 ---
 
 ## Game Flow
 
 ```
-App load → Check Supabase session
-  → First-time player: Tutorial Level
-  → Returning player: Skip tutorial (or replay from settings)
-  → Main Case
-  → End Screen + Score saved to Supabase
+App load → Landing screen
+  → New Investigation | Continue Case (if saved) | Training
+  → Tutorial or Main Case
+  → End Screen + Leaderboard
 ```
 
 ### Phase 1 — Tutorial Level ("The Midnight Glove")
 
-A mandatory, interactive, state-machine tutorial. **Not a static overlay.** Each step:
+An interactive, state-machine tutorial (not a static overlay). Each step:
 1. Shows an instructional panel.
 2. Requires a specific player action.
 3. Gives immediate feedback.
 4. Advances only after the correct action.
 
-UI elements outside the current step are **locked** (pointer-events: none). The active area gets a glow/border highlight.
+UI elements outside the current step are **locked**. The active area gets a highlight.
 
 **Tutorial state machine steps:**
 
 | Step | Instruction | Required Action | Success Message |
 |------|-------------|-----------------|-----------------|
-| 0 | Welcome — "Your AI witness has a faulty memory." | Click Begin | — |
-| 1 | Introduce Case File. Drag "The thief wore a glove..." into the memory cloud. | Drag (or click-select) glove fact → cloud | "Notice the token bar filled up a little." |
-| 2 | "Type 'Who is the thief?' and click Submit." Dragging disabled. | Submit any question | AI: vague response (not enough facts) |
-| 3 | Drag "The theft happened at midnight" into cloud. Re-ask. | Drag midnight fact → cloud, submit question | AI: "The Midnight Glove! That's the thief." |
-| 4 | Drag all 3 facts. Third causes overflow — glove forgotten. Ask again. | Drag all 3; observe overflow | AI: can't identify thief (no glove). "Manage memory carefully." |
-| 5 | Summarize midnight + open window. Drag glove back. Ask again. | Use Summarize on 2 facts; drag glove back; submit | AI identifies thief. "You compressed info to keep the crucial clue." |
-| 6 | Tutorial complete. | Click "Start Real Case" | Unlocks main game. |
+| 0 | Welcome — "Your AI witness has a faulty memory." | Click Begin Training | — |
+| 1 | Drag glove fact into memory cloud. | Drag or tap glove fact → cloud | "Notice the token bar filled up." |
+| 2 | Ask any question. | Submit any question | AI: vague response |
+| 3 | Drag midnight fact into memory. | Drag midnight → cloud | AI: identifies the thief |
+| 4 | Drag window fact and observe overflow. | Drag window → cloud | AI: glove forgotten |
+| 5 | Summarize two facts, then drag glove back. | Summarize → drag glove → ask | AI identifies thief |
+| 6 | Tutorial complete. | Start real case | Unlocks main game |
 
-**Tutorial config:** token limit = 140, each fact = 50 tokens (three facts = 150 → overflows on third).
-
-Tutorial uses **separate state** from the main game and does not write scores to Supabase.
+**Tutorial config:** token limit 140, fact cost floor 50, no system overhead, no decay, no summarize loss.
 
 ### Phase 2 — Main Case ("The Theft of the Blue Diamond Necklace")
 
-- Token budget: **200**
-- Query limit: **10**
-- Correct answer: **"The Red Scarf Burglar"** (requires scarf + midnight facts in memory at accusation)
+- Memory token budget: **170** with **30** system overhead.
+- Interrogation tokens: **90** (prompt token budget).
+- Memory decay: **every 2 queries**.
+- Summarize loss chance: **25%**.
+- Elimination bonus: **+20 interrogation tokens**.
 
 **Facts in Case File:**
-1. "The thief wore a red scarf."
-2. "The theft occurred at midnight."
-3. "The security guard was asleep."
-4. "A loud crash was heard before the alarm."
-5. "The stolen item was a blue diamond necklace."
+1. "A witness saw the thief wearing a red scarf."
+2. "Theft at midnight — jazz club closed at 11 PM."
+3. "Guard Petrov was asleep at his post."
+4. "A crash heard at 11:58 PM before the alarm."
+5. "Blue Diamond Necklace ($2M) taken from locked display."
+6. "East window found unlocked from the inside."
+7. "Red fabric snagged near Crane's pawn shop on Ashford."
+8. "A valet saw a blue sedan idling outside near closing."
+9. "Gallery lights flickered shortly before the alarm."
+
+**Suspects:** five suspects with bios and alibis. The guilty suspect is **Victor Crane**.
+
+**Accuse flow:** open the accusation modal, select a suspect, confirm. Correct conviction requires scarf + midnight + crash evidence in memory.
 
 **AI response logic (rule-based, not LLM):**
-- scarf + midnight in memory → names "The Red Scarf Burglar" confidently
-- only scarf → vague response, mentions scarf
-- only midnight → vague response, mentions timing
-- neither → confused, cannot identify anyone
-
-**Accuse button:** enabled after ≥ 3 queries. Player types the suspect name. Match against "The Red Scarf Burglar" (case-insensitive, fuzzy acceptable). If memory lacks scarf + midnight: "You don't have enough evidence yet."
+- Suspect-specific responses when a suspect is mentioned.
+- General responses depend on which evidence is in memory.
 
 ### Phase 3 — End Screen + Scoring
 
-Saved to Supabase `game_sessions` table.
+Scoring formula:
+- +50 if the case is solved
+- +0..50 based on interrogation token efficiency
+- +0..20 based on peak memory usage
+- +15 if Summarize was used
+- +0..12 for suspect eliminations
 
-| Metric | How scored |
-|--------|-----------|
-| Case solved | Yes / No |
-| Queries used | Fewer = better (10 - used) × 10 pts |
-| Peak token efficiency | Lower peak = better |
-| Summarize usage | Bonus points if used at least once correctly |
+Ranks: `MASTER DETECTIVE`, `SENIOR DETECTIVE`, `DETECTIVE`, `CADET`.
 
-Display shareable result: *"You solved the case in 5 queries using 60% of your token budget."*
+End screen also shows:
+- Prompt history with efficiency warnings and suggested improvements
+- Leaderboard (top 10) from local IndexedDB
 
 ---
 
 ## UI / Design
 
-**Theme:** Dark noir. No bright colors except status indicators.
-
-| Token | Color |
-|-------|-------|
-| Background | `#1a1a1a` |
-| Panels | Parchment `#f5e6c8` |
-| Text | Amber `#ffb347` / green `#39ff14` |
-| Font | Retro terminal (e.g., `Courier New`, `VT323`) |
+**Theme:** Retro paper-and-ink noir. Warm parchment backgrounds, strong borders, and a typewriter vibe.
 
 **Layout (flex/grid):**
 ```
 ┌─────────────────────────────────────────┐
-│ TOKEN BAR (top, fills green → red)      │
+│ TOKEN BAR (memory + interrogation)      │
 ├──────────────────┬──────────────────────┤
-│ MEMORY CLOUD     │ CASE FILE            │
-│ (bubble row)     │ (draggable tokens)   │
+│ MEMORY CLOUD     │ RIGHT PANEL (tabs)   │
+│ (bubble row)     │ Evidence | Suspects  │
 ├──────────────────┴──────────────────────┤
 │ CHAT TERMINAL (scrollable history)      │
 │ [Prompt input] [Submit] [Summarize]     │
@@ -125,49 +134,34 @@ Display shareable result: *"You solved the case in 5 queries using 60% of your t
 └─────────────────────────────────────────┘
 ```
 
+**Landing screen:** New Investigation, Continue Case (if saved), Training.
+
 **Memory Cloud bubbles:**
-- Rounded, semi-transparent, gentle pulse animation.
-- Overflow: leftmost bubble fades out (`opacity: 0`, `scale: 0.8`) then slides left.
+- Rounded bubbles, fade-in animation.
+- Overflow: leftmost bubble fades out and slides away.
+- Stale bubbles after 3 queries.
 
 **Drag-and-drop:**
 - Mouse + touch.
-- Fallback: click fact to select → click cloud area to add (mobile).
+- Fallback: click fact to select → click cloud to add.
 
 **Summarize flow:**
-1. Player clicks Summarize → button label changes to "Select 2 facts to merge".
-2. Player clicks two bubbles (they highlight).
-3. "Confirm Merge" button appears.
-4. Merge → one combined bubble with generated summary label, cost = 40 + 20 overhead tokens.
+1. Click Summarize to enter selection mode.
+2. Click two memory bubbles to select.
+3. Confirm merge to create a new merged bubble.
+
+**Accuse modal:** select a suspect card and confirm the accusation.
 
 ---
 
-## Supabase Schema
+## Persistence (Local)
 
-```sql
--- Game sessions (one row per completed game)
-create table game_sessions (
-  id uuid primary key default gen_random_uuid(),
-  player_id uuid references auth.users,  -- null for anonymous
-  session_token text,                    -- anonymous session identifier
-  tutorial_completed boolean default false,
-  case_solved boolean,
-  queries_used int,
-  peak_tokens int,
-  summarize_used boolean,
-  score int,
-  created_at timestamptz default now()
-);
+**IndexedDB**
+- `game_sessions`: completed runs (score, tokens, solve status, timestamps).
+- `player`: tutorial completion flag + saved game snapshot.
 
--- Leaderboard view
-create view leaderboard as
-  select session_token, score, queries_used, created_at
-  from game_sessions
-  where case_solved = true
-  order by score desc
-  limit 100;
-```
-
-Anonymous play is supported. `session_token` is a UUID stored in localStorage.
+**localStorage**
+- `ft_session_token` stores an anonymous session id for leaderboard display.
 
 ---
 
@@ -175,25 +169,33 @@ Anonymous play is supported. `session_token` is a UUID stored in localStorage.
 
 ```
 src/
-  main.js              # Entry point, app init, Supabase client
+  main.js              # Game entry point and DOM event wiring
+  main.tsx             # React scaffold (not used by game)
+  App.tsx              # Template UI (not used by game)
+  db/
+    indexdb.js         # IndexedDB persistence (sessions + saved game)
   game/
-    state.js           # Central game state (phase, tokens, memory, queries)
+    state.js           # Central game state + configs
     tutorial.js        # Tutorial state machine
-    mainCase.js        # Main game logic
-    aiWitness.js       # Rule-based AI response generator
-    tokenEngine.js     # Token cost calculation, overflow handling
+    mainCase.js        # Main game logic + persistence hooks
+    aiWitness.js       # Rule-based witness responses
+    tokenEngine.js     # Token usage, overflow, decay, summarize, scoring
+    tokenizer.js       # Token counting (js-tiktoken with fallback)
+    suspects.js        # Suspect list + guilty id
   ui/
-    memoryCloud.js     # Bubble rendering, drag-drop, animations
-    caseFile.js        # Fact token rendering
-    chatTerminal.js    # Chat history, prompt input
-    tokenBar.js        # Token bar component
-    tutorialPanel.js   # Tutorial overlay/panel
-    endScreen.js       # Score display
-  supabase/
-    client.js          # Supabase init
-    sessions.js        # Save/load game sessions
+    memoryCloud.js     # Bubble rendering + drop zone
+    caseFile.js        # Evidence list + drag/tap interactions
+    chatTerminal.js    # Chat log + input helpers
+    suspectPanel.js    # Suspect list + accusation modal cards
+    tokenBar.js        # Token bar rendering
+    tutorialPanel.js   # Tutorial overlay panel
+    endScreen.js       # End screen, prompt history, leaderboard
+    helpers.js         # Locking + escaping helpers
   styles/
-    main.css           # Noir theme, layout, animations
+    main.css           # Theme, layout, animations
+public/
+  manifest.json
+  sw.js
 index.html
 vite.config.js
 ```
@@ -202,11 +204,11 @@ vite.config.js
 
 ## Key Constraints
 
-- **No external AI API calls.** The "AI witness" is fully rule-based JS. Responses are selected/generated based on which facts are in memory at query time.
+- **No external AI API calls.** The witness is fully rule-based.
 - **No multi-page routing.** Single SPA, phase transitions are DOM state changes.
-- **PWA-ready.** Include web app manifest and service worker stub.
-- **Mobile-friendly.** Click-to-select fallback for all drag interactions.
-- **Tutorial is gated.** Player cannot skip to main game on first visit (Supabase tracks `tutorial_completed`).
+- **PWA-ready.** Service worker and manifest are present.
+- **Mobile-friendly.** Click-to-select fallback for drag interactions.
+- **Local persistence only.** No backend or Supabase dependency in the gameplay loop.
 
 ---
 
