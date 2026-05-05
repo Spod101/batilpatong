@@ -1,6 +1,6 @@
 import './styles/main.css';
 import { S } from './game/state.js';
-import { applyPromptOverflow, mergeFacts, ageMemory, analyzePrompt, promptTokens } from './game/tokenEngine.js';
+import { applyPromptOverflow, mergeFacts, ageMemory, decayMemory, analyzePrompt, promptTokens } from './game/tokenEngine.js';
 import { aiRespond } from './game/aiWitness.js';
 
 import {
@@ -121,7 +121,7 @@ function submitQuery(txt) {
   if (!txt.trim()) return;
 
   const tokCost = promptTokens(txt);
-  if (tokCost > S.tokenLimit) {
+  if (tokCost + (S.systemOverhead || 0) > S.tokenLimit) {
     addChat('sys', 'That question is too long for the witness to process. Shorten it.');
     return;
   }
@@ -143,7 +143,8 @@ function submitQuery(txt) {
 
   // Prompt tokens temporarily consume memory budget during the response.
   S.tokenUsage += tokCost;
-  if (S.tokenUsage > S.peakToken) S.peakToken = S.tokenUsage;
+  const totalNow = S.tokenUsage + (S.systemOverhead || 0);
+  if (totalNow > S.peakToken) S.peakToken = totalNow;
   updateBar();
 
   const resp = aiRespond(txt);
@@ -164,6 +165,11 @@ function submitQuery(txt) {
   S.queryCount++;
   updateQCounter();
   ageMemory();
+  const decayForgot = decayMemory();
+  if (S.phase === 'game' && decayForgot.length) {
+    animateForgot(decayForgot, () => { renderCloud(); renderCF(); updateBar(); });
+    addChat('sys', 'Memory fades — the oldest clue slips away.');
+  }
 
   setTimeout(() => {
     addChat('ai', resp);
@@ -173,7 +179,50 @@ function submitQuery(txt) {
     if (S.phase === 'game') {
       persistGameState();
     }
+    checkDeadEnd();
   }, 580);
+}
+
+function hasWinEvidence() {
+  const mtext  = S.memFacts.map(f => f.text.toLowerCase()).join(' ');
+  const hasSc  = mtext.includes('scarf') || mtext.includes('crane') || mtext.includes('pawn');
+  const hasMi  = mtext.includes('midnight') || mtext.includes('11 pm') || mtext.includes('jazz');
+  const hasCr  = mtext.includes('crash');
+  return hasSc && hasMi && hasCr;
+}
+
+function canAddAnyFact() {
+  const overhead = S.systemOverhead || 0;
+  return S.cfFacts.some(f => !f.inMemory && (S.tokenUsage + overhead + f.cost) <= S.tokenLimit);
+}
+
+function checkDeadEnd() {
+  if (S.phase !== 'game') return;
+  if (!canAddAnyFact() && S.memFacts.length === 0) {
+    addChat('sys', 'No clues left in memory and no room to add more. The case goes cold.');
+    endGame(false);
+    return;
+  }
+  if (!S.deadEndWarned) {
+    const remaining = S.queryTokenLimit - S.queryTokenUsed;
+    const minPrompt = promptTokens('who is the thief');
+    const nearNoQueries = remaining > 0 && remaining <= minPrompt;
+    const nearNoMemory = !canAddAnyFact() && !hasWinEvidence();
+    if (nearNoQueries || nearNoMemory) {
+      addChat('sys', 'Warning: you are one step from a dead end. Consider accusing or summarizing now.');
+      S.deadEndWarned = true;
+    }
+  }
+  if (S.eliminatedIds.size >= S.suspects.length) {
+    addChat('sys', 'All suspects eliminated. The case goes cold.');
+    endGame(false);
+    return;
+  }
+  const outOfQueries = S.queryTokenUsed >= S.queryTokenLimit;
+  if (outOfQueries && !canAddAnyFact() && !hasWinEvidence()) {
+    addChat('sys', 'No more leads and no evidence left. The case goes cold.');
+    endGame(false);
+  }
 }
 
 // ── Accuse flow ──────────────────────────────────────────
@@ -233,6 +282,7 @@ function processAccuse() {
 // ── Eliminate suspect ────────────────────────────────────
 function handleEliminate(id) {
   eliminateSuspect(id);
+  checkDeadEnd();
 }
 
 // ── Universal drop handler ───────────────────────────────

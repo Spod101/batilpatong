@@ -10,25 +10,30 @@ export function promptTokens(txt) {
   return Math.ceil(base * 1.5);
 }
 
+function totalUsage(extra) {
+  return S.tokenUsage + (S.systemOverhead || 0) + (extra || 0);
+}
+
 // Returns { added: bool, forgotIds: string[] }
 export function addFact(factId) {
   const fact = S.cfFacts.find(f => f.id === factId);
   if (!fact || fact.inMemory) return { added: false, forgotIds: [] };
 
   const forgotIds = [];
-  while (S.tokenUsage + fact.cost > S.tokenLimit && S.memFacts.length > 0) {
+  while (totalUsage(fact.cost) > S.tokenLimit && S.memFacts.length > 0) {
     const oldest = S.memFacts.shift();
     S.tokenUsage -= oldest.cost;
     const cf = S.cfFacts.find(f => f.id === oldest.id);
     if (cf) cf.inMemory = false;
     forgotIds.push(oldest.id);
   }
-  if (S.tokenUsage + fact.cost > S.tokenLimit) return { added: false, forgotIds };
+  if (totalUsage(fact.cost) > S.tokenLimit) return { added: false, forgotIds };
 
   fact.inMemory = true;
   S.memFacts.push({ id: fact.id, text: fact.text, cost: fact.cost, merged: false, age: 0 });
   S.tokenUsage += fact.cost;
-  if (S.tokenUsage > S.peakToken) S.peakToken = S.tokenUsage;
+  const totalNow = totalUsage(0);
+  if (totalNow > S.peakToken) S.peakToken = totalNow;
 
   return { added: true, forgotIds };
 }
@@ -37,7 +42,7 @@ export function addFact(factId) {
 export function applyPromptOverflow(txt) {
   const pt = promptTokens(txt);
   const forgotIds = [];
-  while (S.tokenUsage + pt > S.tokenLimit && S.memFacts.length > 0) {
+  while (totalUsage(pt) > S.tokenLimit && S.memFacts.length > 0) {
     const oldest = S.memFacts.shift();
     S.tokenUsage -= oldest.cost;
     const cf = S.cfFacts.find(f => f.id === oldest.id);
@@ -52,14 +57,40 @@ export function ageMemory() {
   S.memFacts.forEach(f => { f.age = (f.age || 0) + 1; });
 }
 
+// Drop the oldest fact at a fixed cadence to simulate decay.
+export function decayMemory() {
+  const forgotIds = [];
+  if (!S.decayEveryQueries || S.decayEveryQueries < 1) return forgotIds;
+  if (S.queryCount > 0 && S.queryCount % S.decayEveryQueries === 0 && S.memFacts.length > 0) {
+    const oldest = S.memFacts.shift();
+    S.tokenUsage -= oldest.cost;
+    const cf = S.cfFacts.find(f => f.id === oldest.id);
+    if (cf) cf.inMemory = false;
+    forgotIds.push(oldest.id);
+  }
+  return forgotIds;
+}
+
 // Returns { mergedId, mergedText, saved, newCost } or null if invalid
 export function mergeFacts(id1, id2) {
   const f1 = S.memFacts.find(f => f.id === id1);
   const f2 = S.memFacts.find(f => f.id === id2);
   if (!f1 || !f2) return null;
 
-  const mtext = MERGE_TABLE[`${id1}+${id2}`] ||
+  let mtext = MERGE_TABLE[`${id1}+${id2}`] ||
     (f1.text.substring(0, 18) + '… & ' + f2.text.substring(0, 18) + '…').substring(0, 44);
+
+  if (S.phase === 'game' && S.summarizeLossChance && Math.random() < S.summarizeLossChance) {
+    const keywords = [
+      'scarf', 'midnight', 'crash', 'guard', 'necklace', 'window', 'pawn', 'pawn shop', 'ashford',
+    ];
+    const hit = keywords.find(k => mtext.toLowerCase().includes(k));
+    if (hit) {
+      const re = new RegExp(`\\b${hit.replace(' ', '\\s+')}\\b`, 'i');
+      mtext = mtext.replace(re, '').replace(/\s{2,}/g, ' ').trim();
+      if (!mtext) mtext = 'Merged clue (blurred detail)';
+    }
+  }
   const oldCost = f1.cost + f2.cost;
   const newCost = countTokens(mtext);
 

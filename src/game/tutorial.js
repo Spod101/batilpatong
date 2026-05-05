@@ -239,6 +239,9 @@ export function initTutorial() {
     tokenUsage: 0,
     tokenLimit: TUT_CFG.tokenLimit,
     factCost: TUT_CFG.factCost,
+    systemOverhead: TUT_CFG.systemOverhead,
+    decayEveryQueries: TUT_CFG.decayEveryQueries,
+    summarizeLossChance: TUT_CFG.summarizeLossChance,
     queryCount: 0,
     queryTokenUsed: 0,
     queryTokenLimit: TUT_CFG.queryTokenLimit,
@@ -256,6 +259,7 @@ export function initTutorial() {
     promptHistory: [],
     accusedId: null,
     selectedAccuseId: null,
+    deadEndWarned: false,
   });
   S.cfFacts = TUT_CFG.facts.map(f => ({
     ...f,

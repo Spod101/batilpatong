@@ -31,6 +31,11 @@ export function handleDrop(fid) {
 }
 
 export function eliminateSuspect(id) {
+  const remaining = S.suspects.length - S.eliminatedIds.size;
+  if (remaining <= 1) {
+    addChat('sys', 'You cannot eliminate the last remaining suspect. Make an accusation instead.');
+    return;
+  }
   if (S.eliminatedIds.has(id)) return;
   S.eliminatedIds.add(id);
   if (S.eliminationBonus > 0) {
@@ -97,6 +102,9 @@ export function initGame(savedState) {
       tokenUsage: savedState.tokenUsage || 0,
       tokenLimit: savedState.tokenLimit || GAME_CFG.tokenLimit,
       factCost: savedState.factCost || GAME_CFG.factCost,
+      systemOverhead: savedState.systemOverhead ?? GAME_CFG.systemOverhead,
+      decayEveryQueries: savedState.decayEveryQueries ?? GAME_CFG.decayEveryQueries,
+      summarizeLossChance: savedState.summarizeLossChance ?? GAME_CFG.summarizeLossChance,
       queryCount: savedState.queryCount || 0,
       queryTokenUsed: savedState.queryTokenUsed || 0,
       queryTokenLimit: savedState.queryTokenLimit || GAME_CFG.queryTokenLimit,
@@ -114,6 +122,7 @@ export function initGame(savedState) {
       promptHistory: savedState.promptHistory || [],
       accusedId: null,
       selectedAccuseId: null,
+      deadEndWarned: savedState.deadEndWarned || false,
     });
     S.cfFacts = savedState.cfFacts || GAME_CFG.facts.map(f => ({
       ...f,
@@ -127,6 +136,9 @@ export function initGame(savedState) {
       tokenUsage: 0,
       tokenLimit: GAME_CFG.tokenLimit,
       factCost: GAME_CFG.factCost,
+      systemOverhead: GAME_CFG.systemOverhead,
+      decayEveryQueries: GAME_CFG.decayEveryQueries,
+      summarizeLossChance: GAME_CFG.summarizeLossChance,
       queryCount: 0,
       queryTokenUsed: 0,
       queryTokenLimit: GAME_CFG.queryTokenLimit,
@@ -144,6 +156,7 @@ export function initGame(savedState) {
       promptHistory: [],
       accusedId: null,
       selectedAccuseId: null,
+      deadEndWarned: false,
     });
     S.cfFacts = GAME_CFG.facts.map(f => ({
       ...f,
@@ -202,6 +215,9 @@ function _persistGameState() {
     tokenUsage: S.tokenUsage,
     tokenLimit: S.tokenLimit,
     factCost: S.factCost,
+    systemOverhead: S.systemOverhead,
+    decayEveryQueries: S.decayEveryQueries,
+    summarizeLossChance: S.summarizeLossChance,
     queryCount: S.queryCount,
     queryTokenUsed: S.queryTokenUsed,
     queryTokenLimit: S.queryTokenLimit,
@@ -211,6 +227,7 @@ function _persistGameState() {
     suspects: S.suspects,
     eliminatedIds: [...S.eliminatedIds],
     promptHistory: S.promptHistory,
+    deadEndWarned: S.deadEndWarned,
   };
   saveCurrentGame(snapshot).catch(() => {});
 }

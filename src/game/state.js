@@ -1,6 +1,9 @@
 export const TUT_CFG = {
   tokenLimit: 140,
   factCost: 50,
+  systemOverhead: 0,
+  decayEveryQueries: 0,
+  summarizeLossChance: 0,
   queryTokenLimit: 999,
   eliminationBonus: 0,
   facts: [
@@ -13,6 +16,9 @@ export const TUT_CFG = {
 export const GAME_CFG = {
   tokenLimit: 170,
   factCost: 40,
+  systemOverhead: 30,
+  decayEveryQueries: 2,
+  summarizeLossChance: 0.25,
   queryTokenLimit: 90,
   eliminationBonus: 20,
   facts: [
@@ -68,6 +74,9 @@ export const S = {
   tokenUsage: 0,
   tokenLimit: 140,
   factCost: 50,
+  systemOverhead: 0,
+  decayEveryQueries: 0,
+  summarizeLossChance: 0,
   queryCount: 0,
   queryTokenUsed: 0,
   queryTokenLimit: 999,
@@ -86,4 +95,5 @@ export const S = {
   promptHistory: [],       // [{text, tokensUsed, memSnapshot, response}]
   accusedId: null,
   selectedAccuseId: null,
+  deadEndWarned: false,
 };
