@@ -1,3 +1,5 @@
+import { supabase } from './supabase.js';
+
 const DB_NAME        = 'fading-testimony';
 const DB_VERSION     = 2;
 const STORE_SESSIONS = 'game_sessions';
@@ -32,21 +34,66 @@ function getSessionToken() {
 }
 
 export async function saveSession(data) {
+  const record = {
+    ...data,
+    sessionToken: getSessionToken(),
+    createdAt: new Date().toISOString(),
+  };
+
+  // local save
   const db = await openDB();
-  return new Promise((resolve, reject) => {
+  await new Promise((resolve, reject) => {
     const tx    = db.transaction(STORE_SESSIONS, 'readwrite');
     const store = tx.objectStore(STORE_SESSIONS);
-    const req   = store.add({
-      ...data,
-      sessionToken: getSessionToken(),
-      createdAt: new Date().toISOString(),
-    });
+    const req   = store.add(record);
     req.onsuccess = () => resolve(req.result);
     req.onerror   = e => reject(e.target.error);
   });
+
+  // remote save (fire-and-forget — don't block game flow on failure)
+  if (supabase) {
+    supabase.from('game_sessions').insert({
+      session_token:  record.sessionToken,
+      case_solved:    record.caseSolved    ?? false,
+      queries_used:   record.queriesUsed   ?? 0,
+      query_count:    record.queryCount    ?? 0,
+      peak_tokens:    record.peakTokens    ?? 0,
+      summarize_used: record.summarizeUsed ?? false,
+      accused_id:     record.accusedId     ?? null,
+      score:          record.score         ?? 0,
+      created_at:     record.createdAt,
+    }).then(({ error }) => {
+      if (error) console.warn('Supabase session save failed:', error.message);
+    });
+  }
 }
 
 export async function getLeaderboard() {
+  // prefer global leaderboard from Supabase
+  if (supabase) {
+    const { data, error } = await supabase
+      .from('game_sessions')
+      .select('session_token, score, query_count, queries_used, peak_tokens, summarize_used, accused_id, created_at')
+      .eq('case_solved', true)
+      .order('score', { ascending: false })
+      .limit(100);
+
+    if (!error && data?.length) {
+      return data.map(r => ({
+        sessionToken:  r.session_token,
+        score:         r.score,
+        queryCount:    r.query_count,
+        queriesUsed:   r.queries_used,
+        peakTokens:    r.peak_tokens,
+        summarizeUsed: r.summarize_used,
+        accusedId:     r.accused_id,
+        createdAt:     r.created_at,
+        caseSolved:    true,
+      }));
+    }
+  }
+
+  // fallback to local IndexedDB
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const tx    = db.transaction(STORE_SESSIONS, 'readonly');

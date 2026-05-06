@@ -9,7 +9,7 @@
     "preview": "vite preview --config vite.config.js"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.49.3",
+    "@supabase/supabase-js": "^2.105.3",
     "js-tiktoken": "^1.0.21",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
