@@ -108,35 +108,35 @@ function gameRespond(queryText) {
     "Crane's pawn shop on Ashford, red fabric on the fence... and a red scarf at the scene. This points one way.",
   ]);
   if (hasSc) return pick([
-    "I remember a red scarf... distinctive... but who wore it? And when did they strike?",
-    "The red scarf stays with me. Memorable. But the timing — I need the hour.",
-    "Someone in a red scarf. I see the image but cannot place it in time.",
+    "A red scarf... distinctive, hard to forget. But when did they strike? I need the hour to place it.",
+    "Someone in a red scarf — the image is sharp. But where were they, and when? The timeline is missing.",
+    "The red scarf, yes. But who wore it, and at what time? Give me the moment.",
   ]);
   if (hasMi) return pick([
-    "Midnight... yes. But the figure is in shadow. Who was there at that hour?",
-    "It happened at midnight. The jazz club closes at eleven. One alibi falls apart — whose?",
-    "The clock struck midnight. Beyond that... nothing but fog.",
+    "Midnight... the jazz club closed at eleven. Someone's alibi just broke. But who was there — what did they look like?",
+    "It happened after midnight. A narrow window. I need to know who took it — any description of the person?",
+    "The clock struck midnight. But the figure is in shadow. Tell me something about the thief — anything.",
   ]);
   if (hasGu) return pick([
-    "The guard was asleep... someone slipped past unnoticed. But who took that opportunity?",
-    "Petrov at his post, fast asleep. An opportunity taken. But by whom?",
+    "The guard was asleep. Someone slipped through unnoticed. But through where — what entry point was left open?",
+    "Petrov at his post, fast asleep. That explains the entry. But what did the thief look like — any description?",
   ]);
   if (hasWi) return pick([
-    "The east window... unlocked from within. Someone with inside knowledge, or inside access.",
-    "That window did not open itself. Someone who knew the building opened it ahead of time.",
+    "The east window, unlocked from inside. Someone knew the building. But when — and who had that kind of access?",
+    "That window did not open itself. Who had inside knowledge? And what time did this happen?",
   ]);
   if (hasCr) return pick([
-    "That crash before the alarm... two minutes of chaos. A diversion, I think. Deliberate.",
-    "Someone caused that crash to cover their movement. Entry, or exit?",
+    "That crash at 11:58 — deliberate, a distraction. For what, exactly? I need the timeline around it.",
+    "Someone caused that crash to cover their movement. Entry or exit? I need to know who was near the gallery.",
   ]);
   if (hasNk) return pick([
-    "The necklace... beautiful and stolen. Worth two million. Who wanted it badly enough?",
-    "Two million in diamonds, taken from a locked case. This was no amateur.",
+    "Two million in diamonds, taken from a locked display. This took planning. Who in this city could fence something that valuable?",
+    "The necklace... beautiful and gone. A professional job. But who had the motive and the means?",
   ]);
   return pick([
-    "My memory is dark. I see nothing. Give me something to hold on to.",
-    "The fog... I cannot help you like this. Share the case files with me.",
-    "There is only darkness here. What do you want me to remember?",
+    "My memory is dark. Give me something from the case file — a clue, a name, a time. Anything concrete.",
+    "I cannot help you without evidence to work from. Load a clue and ask again.",
+    "There is only fog here. What do you want me to remember? Share the evidence with me.",
   ]);
 }
 

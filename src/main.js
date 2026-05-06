@@ -1,5 +1,5 @@
 import './styles/main.css';
-import { S } from './game/state.js';
+import { S, MERGE_TABLE } from './game/state.js';
 import { applyPromptOverflow, mergeFacts, ageMemory, decayMemory, analyzePrompt, promptTokens } from './game/tokenEngine.js';
 import { aiRespondAsync } from './game/aiWitness.js';
 
@@ -52,6 +52,24 @@ function switchTab(tab) {
   document.getElementById('tab-suspects').classList.toggle('tab-active', tab === 'suspects');
 }
 
+// ── Memory pressure hints ────────────────────────────────
+function checkMemoryPressure() {
+  if (S.phase !== 'game') return;
+  const used = S.tokenUsage + S.systemOverhead;
+  const pct  = used / S.tokenLimit;
+  const sb   = document.getElementById('btn-summarize');
+  if (!S.hint90Shown && pct >= 0.9) {
+    addChat('sys', 'Memory nearly full. Use Summarize to compress two clues into one — or your next addition will push something out.');
+    S.hint90Shown = true;
+    S.hint70Shown = true;
+    if (sb) sb.classList.add('mem-pressure');
+  } else if (!S.hint70Shown && pct >= 0.7) {
+    addChat('sys', 'Memory is getting full. Summarize two clues into one to free up space — merged clues may lose some detail.');
+    S.hint70Shown = true;
+    if (sb) sb.classList.add('mem-pressure');
+  }
+}
+
 // ── Summarize mode ───────────────────────────────────────
 function enterSumMode() {
   if (S.memFacts.length < 2) {
@@ -65,7 +83,14 @@ function enterSumMode() {
   sb.textContent = 'Selecting…';
   document.getElementById('btn-confirm-merge').style.display = 'none';
   document.getElementById('btn-cancel-sum').style.display    = 'inline-block';
-  addChat('sys', 'Click two facts in the memory cloud to select them for merging.');
+
+  const memIds   = S.memFacts.map(f => f.id);
+  const hasCompat = S.memFacts.some(f =>
+    memIds.some(id => id !== f.id && (MERGE_TABLE[`${f.id}+${id}`] || MERGE_TABLE[`${id}+${f.id}`]))
+  );
+  addChat('sys', hasCompat
+    ? 'Click two facts to merge them. Green-ringed facts have a clean merge ready.'
+    : 'Click two facts in memory to merge them into one smaller clue.');
 
   if (S.phase === 'tutorial') onSummarizeClicked();
 }
@@ -94,10 +119,24 @@ function toggleBubbleSel(fid) {
     bub?.classList.add('sel-merge');
   }
   const cfm = document.getElementById('btn-confirm-merge');
-  cfm.style.display = S.sumSelected.length === 2 ? 'inline-block' : 'none';
   if (S.sumSelected.length === 2) {
+    const [id1, id2] = S.sumSelected;
+    const f1 = S.memFacts.find(f => f.id === id1);
+    const f2 = S.memFacts.find(f => f.id === id2);
+    if (f1 && f2) {
+      const mergedText = MERGE_TABLE[`${id1}+${id2}`] || MERGE_TABLE[`${id2}+${id1}`];
+      const estNew  = mergedText ? Math.max(1, Math.ceil(mergedText.length / 4)) : 11;
+      const estSaved = Math.max(0, f1.cost + f2.cost - estNew);
+      const risk     = S.phase === 'game' ? ' (25% risk)' : '';
+      cfm.textContent = `Merge → save ~${estSaved}t${risk}`;
+    } else {
+      cfm.textContent = 'Confirm Merge';
+    }
+    cfm.style.display = 'inline-block';
     cfm.disabled = false;
     cfm.classList.remove('locked');
+  } else {
+    cfm.style.display = 'none';
   }
   if (S.phase === 'tutorial') onBubbleSelected(S.sumSelected.length);
 }
@@ -110,7 +149,14 @@ function doConfirmMerge() {
 
   exitSumMode();
   renderCloud(); renderCF(); updateBar();
-  addChat('sys', `Merged → "${result.mergedText}" (${result.newCost}t, saved ${result.saved}t)`);
+
+  const freeToks    = S.tokenLimit - S.tokenUsage - S.systemOverhead;
+  const expectedTxt = MERGE_TABLE[`${id1}+${id2}`] || MERGE_TABLE[`${id2}+${id1}`];
+  const wasLossy    = expectedTxt && result.mergedText !== expectedTxt;
+  let msg = `Merged → "${result.mergedText}" — freed ${result.saved}t. ${freeToks}t now available.`;
+  if (wasLossy)         msg += ' A detail may have blurred.';
+  if (result.saved < 2) msg += ' (Try pairing a longer fact next time for bigger savings.)';
+  addChat('sys', msg);
 
   if (S.phase === 'tutorial') tutMergeDone(id1, id2);
   if (S.phase === 'game') persistGameState();
@@ -242,8 +288,15 @@ function onAccuseSelect(id) {
 function openAccuse() {
   S.selectedAccuseId = null;
   document.getElementById('accuse-modal').classList.add('open');
-  document.getElementById('accuse-result').textContent = '';
-  document.getElementById('btn-accuse-ok').disabled    = true;
+  const res = document.getElementById('accuse-result');
+  if (!hasWinEvidence()) {
+    res.className   = 'fail';
+    res.textContent = '⚠ Load the key evidence into memory first — the witness must remember it to testify.';
+  } else {
+    res.className   = '';
+    res.textContent = '';
+  }
+  document.getElementById('btn-accuse-ok').disabled = true;
   renderAccuseSuspects(null, onAccuseSelect);
 }
 
@@ -299,6 +352,7 @@ function handleDrop(fid) {
     tutDrop(fid);
   } else if (S.phase === 'game') {
     gameDrop(fid);
+    checkMemoryPressure();
   }
 }
 

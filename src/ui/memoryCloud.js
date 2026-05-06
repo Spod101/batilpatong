@@ -1,4 +1,4 @@
-import { S } from '../game/state.js';
+import { S, MERGE_TABLE } from '../game/state.js';
 import { esc } from './helpers.js';
 
 let _onBubbleClick = null;
@@ -9,11 +9,20 @@ export function renderCloud(onBubbleClick) {
   const cl = document.getElementById('memory-cloud');
   cl.querySelectorAll('.memory-bubble').forEach(b => b.remove());
   document.getElementById('mcPlaceholder').style.display = S.memFacts.length ? 'none' : 'block';
+  const memIds = S.memFacts.map(f => f.id);
   S.memFacts.forEach(f => {
     const b = document.createElement('div');
     b.className = 'memory-bubble' + (f.merged ? ' merged' : '') + ((f.age || 0) >= 3 ? ' stale' : '');
     b.dataset.id = f.id;
     b.innerHTML = `<span class="bt">${esc(f.text)}</span><span class="bc">${f.cost}t</span>`;
+
+    if (S.isSummarizing) {
+      const hasCompat = memIds.some(id =>
+        id !== f.id && (MERGE_TABLE[`${f.id}+${id}`] || MERGE_TABLE[`${id}+${f.id}`])
+      );
+      if (hasCompat) b.classList.add('merge-compat');
+    }
+
     b.addEventListener('click', () => {
       if (_onBubbleClick) _onBubbleClick(f.id);
     });

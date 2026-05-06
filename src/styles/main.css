@@ -761,6 +761,34 @@ button:disabled, button.locked { opacity:.5; cursor:not-allowed; box-shadow: non
   transform: rotate(3deg);
 }
 
+/* ── summarize pressure state ────────────────────────────── */
+@keyframes sumPulse { 0%,100% { box-shadow:3px 3px 0 #3e2723 } 50% { box-shadow:3px 3px 0 #d84315, 0 0 10px rgba(216,67,21,.4) } }
+#btn-summarize.mem-pressure { animation: sumPulse 1.2s infinite; border-color:#d84315; color:#d84315; }
+
+/* ── merge-compat bubble ring ────────────────────────────── */
+.memory-bubble.merge-compat {
+  box-shadow: 0 0 0 3px #4caf50, 2px 2px 5px rgba(0,0,0,0.1);
+  border-color: #2e7d32;
+}
+.memory-bubble.merge-compat.sel-merge {
+  box-shadow: 0 0 0 3px #4caf50, 0 0 12px rgba(21,101,192,.5);
+}
+
+/* ── case file group labels ──────────────────────────────── */
+.cf-group-label {
+  font-size: 9px;
+  font-weight: bold;
+  color: #a0816a;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 6px 2px 3px;
+  border-bottom: 1px dashed #a0816a;
+  margin-bottom: 2px;
+  pointer-events: none;
+  user-select: none;
+}
+.cf-group-label:first-of-type { padding-top: 0; }
+
 /* ── misc ────────────────────────────────────────────────── */
 .locked { opacity:.25 !important; pointer-events:none !important; }
 ::-webkit-scrollbar       { width:4px; height:4px; }

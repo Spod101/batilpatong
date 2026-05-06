@@ -22,15 +22,15 @@ export const GAME_CFG = {
   queryTokenLimit: 90,
   eliminationBonus: 20,
   facts: [
-    { id: 'scarf',    text: 'A witness saw the thief wearing a red scarf.' },
-    { id: 'midnight', text: 'Theft at midnight — jazz club closed at 11 PM.' },
-    { id: 'guard',    text: 'Guard Petrov was asleep at his post.' },
-    { id: 'crash',    text: 'A crash heard at 11:58 PM before the alarm.' },
-    { id: 'necklace', text: 'Blue Diamond Necklace ($2M) taken from locked display.' },
-    { id: 'window',   text: 'East window found unlocked from the inside.' },
-    { id: 'pawnshop', text: 'Red fabric snagged near Crane\'s pawn shop on Ashford.' },
-    { id: 'valet',    text: 'A valet saw a blue sedan idling outside near closing.' },
-    { id: 'lights',   text: 'Gallery lights flickered shortly before the alarm.' },
+    { id: 'scarf',    text: 'A witness saw the thief wearing a red scarf.',            group: 'identity' },
+    { id: 'pawnshop', text: 'Red fabric snagged near Crane\'s pawn shop on Ashford.',  group: 'identity' },
+    { id: 'guard',    text: 'Guard Petrov was asleep at his post.',                    group: 'scene'    },
+    { id: 'crash',    text: 'A crash heard at 11:58 PM before the alarm.',             group: 'scene'    },
+    { id: 'necklace', text: 'Blue Diamond Necklace ($2M) taken from locked display.',  group: 'scene'    },
+    { id: 'window',   text: 'East window found unlocked from the inside.',             group: 'scene'    },
+    { id: 'midnight', text: 'Theft at midnight — jazz club closed at 11 PM.',          group: 'timeline' },
+    { id: 'valet',    text: 'A valet saw a blue sedan idling outside near closing.',   group: 'timeline' },
+    { id: 'lights',   text: 'Gallery lights flickered shortly before the alarm.',      group: 'timeline' },
   ],
 };
 
@@ -96,4 +96,6 @@ export const S = {
   accusedId: null,
   selectedAccuseId: null,
   deadEndWarned: false,
+  hint70Shown: false,
+  hint90Shown: false,
 };
