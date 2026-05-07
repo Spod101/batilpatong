@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -13,70 +14,163 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/icon-192.png">
 </head>
+
 <body>
 
   <div id="screen-landing">
-    <div id="landing-scanline"></div>
-    <div id="landing-inner">
+    <!-- Background Layer -->
+    <div id="landing-bg"></div>
+    <div id="landing-overlay"></div>
+
+    <!-- Top Left Header -->
+    <header id="landing-header">
       <div id="landing-logo">◈</div>
-      <h1 id="landing-title">FADING TESTIMONY</h1>
-      <p id="landing-tagline">The witness remembers.<br>Until it doesn't.</p>
-      <div id="landing-menu">
-        <button id="btn-new-game">▶ NEW INVESTIGATION</button>
-        <button id="btn-continue" style="display:none">⟳ CONTINUE CASE</button>
-        <button id="btn-go-tutorial">◎ TRAINING</button>
+      <div id="landing-header-text">
+        <h1 id="landing-title">NOIR INVESTIGATIONS</h1>
+        <div id="landing-header-sub">
+          <span>STATION: 42ND PRECINCT</span>
+          <span class="divider">|</span>
+          <span>EST.1947</span>
+        </div>
       </div>
-      <p id="landing-hint">Interrogate a witness with limited memory.<br>Manage your clues. Solve the case.</p>
+    </header>
+
+    <!-- Top Right Stats -->
+    <div id="landing-top-right">
+      <div>OFFICER: UNASSIGNED</div>
+      <div class="build-info">BUILD: RELEASE_A.2024.11</div>
     </div>
+
+    <!-- Main Menu Box (Left) -->
+    <div id="landing-menu-box">
+      <div id="landing-menu-tab">CASE_LOG_V1.0.4</div>
+      <div id="landing-menu-inner">
+        <div id="landing-menu-title">SELECT PROTOCOL</div>
+        <p id="landing-menu-desc">Investigation department of local jurisdiction.</p>
+        <hr class="menu-divider">
+        <div id="landing-menu">
+          <button id="btn-new-game">
+            <span class="btn-sub">01_INITIATION</span>
+            <span class="btn-main">NEW CASE</span>
+            <span class="btn-icon">→</span>
+          </button>
+          <button id="btn-go-tutorial">
+            <span class="btn-sub">03_ARCHIVE_ACCESS</span>
+            <span class="btn-main">Training</span>
+            <span class="btn-icon">📁</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Polaroid (Right) -->
+    <div id="landing-polaroid">
+      <div class="polaroid-img-wrap">
+        <img id="polaroid-detective" alt="Detective">
+      </div>
+      <div class="polaroid-caption">Case #4092: Last Seen 02:44 AM</div>
+    </div>
+
+    <!-- Beta Stamp -->
+    <div id="landing-beta-stamp">
+      <div class="stamp-inner">
+        <div class="stamp-label">INTERNAL USE ONLY</div>
+        <div class="stamp-main">BETA</div>
+        <div class="stamp-version">0.9</div>
+        <div class="stamp-owner">PROPERTY OF NOIR CORP</div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer id="landing-footer">
+      <span>COPYRIGHT 1994 INVESTIGATION SYSTEMS INC.</span>
+      <span>ALL DATA ENCRYPTED</span>
+    </footer>
   </div>
 
   <div id="screen-level" style="display:none">
+    <!-- Background Layer (Reuse landing bg style via class or similar) -->
+    <div id="level-bg"></div>
+    <div id="level-overlay"></div>
+
     <div id="level-inner">
-      <div id="level-title">SELECT DIFFICULTY</div>
-      <p id="level-sub">Each case has different suspects, clues, and memory limits.</p>
-      <div id="level-cards">
-
-        <div class="level-card level-easy">
-          <div class="lc-badge">EASY</div>
-          <div class="lc-title">THE MISSING HEIRLOOM</div>
-          <div class="lc-desc">A gold watch vanishes from a locked boutique.</div>
-          <ul class="lc-stats">
-            <li>3 suspects</li>
-            <li>6 clues</li>
-            <li>Memory: 190t &nbsp;·&nbsp; Interrogation: 120t</li>
-            <li>Slow memory decay</li>
-          </ul>
-          <button id="btn-level-easy" class="lc-btn">▶ Play Easy</button>
-        </div>
-
-        <div class="level-card level-medium">
-          <div class="lc-badge">MEDIUM</div>
-          <div class="lc-title">THE BLUE DIAMOND NECKLACE</div>
-          <div class="lc-desc">A $2M necklace stolen from a locked gallery at midnight.</div>
-          <ul class="lc-stats">
-            <li>5 suspects</li>
-            <li>9 clues</li>
-            <li>Memory: 170t &nbsp;·&nbsp; Interrogation: 90t</li>
-            <li>Moderate decay &amp; summarize risk</li>
-          </ul>
-          <button id="btn-level-medium" class="lc-btn">▶ Play Medium</button>
-        </div>
-
-        <div class="level-card level-hard">
-          <div class="lc-badge">HARD</div>
-          <div class="lc-title">THE VANISHING MAESTRO</div>
-          <div class="lc-desc">A celebrated conductor is poisoned in his locked estate.</div>
-          <ul class="lc-stats">
-            <li>7 suspects</li>
-            <li>11 clues</li>
-            <li>Memory: 150t &nbsp;·&nbsp; Interrogation: 70t</li>
-            <li>Fast decay every query, 35% summarize loss</li>
-          </ul>
-          <button id="btn-level-hard" class="lc-btn">▶ Play Hard</button>
-        </div>
-
+      <div id="level-header">
+        <h2 id="level-title">SELECT DIFFICULTY</h2>
+        <p id="level-sub">Each case has different suspects, clues, and memory limits.</p>
       </div>
-      <button id="btn-level-back" class="lc-back">← Back</button>
+
+      <div id="level-cards">
+        <!-- Easy Case -->
+        <div class="level-card level-easy">
+          <div class="lc-paper-inner">
+            <div class="lc-top-meta">
+              <div class="lc-stamp">EASY</div>
+              <div class="lc-ref">REF: #HK-001</div>
+            </div>
+            <h3 class="lc-title">THE MISSING HEIRLOOM</h3>
+            <p class="lc-desc">A gold watch vanishes from a locked boutique.</p>
+            <hr class="lc-divider">
+            <ul class="lc-stats">
+              <li>3 suspects</li>
+              <li>6 clues</li>
+            </ul>
+            <div class="lc-budget-row">
+              <span>Memory: 180t</span>
+              <span>Interrogation: 120t</span>
+            </div>
+            <div class="lc-flavor">SLOW MEMORY DECAY</div>
+            <button id="btn-level-easy" class="lc-btn">▶ PLAY EASY</button>
+          </div>
+        </div>
+
+        <!-- Medium Case -->
+        <div class="level-card level-medium">
+          <div class="lc-paper-inner">
+            <div class="lc-top-meta">
+              <div class="lc-stamp">MEDIUM</div>
+              <div class="lc-ref">REF: #NY-042</div>
+            </div>
+            <h3 class="lc-title">THE BLUE DIAMOND NECKLACE</h3>
+            <p class="lc-desc">A $2M necklace stolen from a locked gallery at midnight.</p>
+            <hr class="lc-divider">
+            <ul class="lc-stats">
+              <li>5 suspects</li>
+              <li>9 clues</li>
+            </ul>
+            <div class="lc-budget-row">
+              <span>Memory: 170t</span>
+              <span>Interrogation: 90t</span>
+            </div>
+            <div class="lc-flavor">MODERATE DECAY & SUMMARIZE RISK</div>
+            <button id="btn-level-medium" class="lc-btn">▶ PLAY MEDIUM</button>
+          </div>
+        </div>
+
+        <!-- Hard Case -->
+        <div class="level-card level-hard">
+          <div class="lc-paper-inner">
+            <div class="lc-top-meta">
+              <div class="lc-stamp">HARD</div>
+              <div class="lc-ref">REF: #LN-909</div>
+            </div>
+            <h3 class="lc-title">THE VANISHING MAESTRO</h3>
+            <p class="lc-desc">A celebrated conductor is poisoned in his locked estate.</p>
+            <hr class="lc-divider">
+            <ul class="lc-stats">
+              <li>7 suspects</li>
+              <li>11 clues</li>
+            </ul>
+            <div class="lc-budget-row">
+              <span>Memory: 150t</span>
+              <span>Interrogation: 70t</span>
+            </div>
+            <div class="lc-flavor">FAST DECAY EVERY QUERY, 35% SUMMARIZE LOSS</div>
+            <button id="btn-level-hard" class="lc-btn">▶ PLAY HARD</button>
+          </div>
+        </div>
+      </div>
+
+      <button id="btn-level-back" class="lc-back-btn">← BACK</button>
     </div>
   </div>
 
@@ -145,55 +239,62 @@
   </div>
 
   <div id="screen-game" style="display:none">
+    <div id="game-bg"></div>
+    <div id="game-overlay"></div>
 
-    <div id="token-bar-wrap">
-      <button id="btn-home" title="Back to menu">←</button>
-      <span id="difficulty-badge" style="display:none" class="diff-badge">MEDIUM</span>
-      <div id="tbTitle">Memory</div>
-      <div id="token-bar-track"><div id="token-bar-fill"></div></div>
-      <div id="tbLabel">0 / 140</div>
-      <div id="qCounter" style="display:none">Interrogation: 0 / 0t</div>
-    </div>
-
-    <!-- Middle: memory cloud + right panel (tabs) -->
-    <div id="game-middle">
-      <div id="memory-cloud">
-        <div id="mcPlaceholder">Drag facts here<br>to share with the witness</div>
+    <div id="game-content">
+      <!-- Token Bar -->
+      <div id="token-bar-wrap">
+        <button id="btn-home" title="Back to menu">←</button>
+        <span id="difficulty-badge" style="display:none" class="diff-badge">MEDIUM</span>
+        <div id="tbTitle">Memory</div>
+        <div id="token-bar-track">
+          <div id="token-bar-fill"></div>
+        </div>
+        <div id="tbLabel">0 / 140</div>
+        <div id="qCounter" style="display:none">Interrogation: 0 / 0t</div>
       </div>
 
-      <!-- Right panel with tabs -->
-      <div id="right-panel">
-        <div id="panel-tabs">
-          <button id="tab-evidence" class="tab-btn tab-active">Evidence</button>
-          <button id="tab-suspects" class="tab-btn">Suspects</button>
+      <!-- Middle: memory cloud + right panel (tabs) -->
+      <div id="game-middle">
+        <div id="memory-cloud">
+          <div id="mcPlaceholder">Drag facts here<br>to share with the witness</div>
         </div>
 
-        <!-- Case File tab -->
-        <div id="case-file">
-          <div id="cfTitle">Case File</div>
-        </div>
+        <!-- Right panel with tabs -->
+        <div id="right-panel">
+          <div id="panel-tabs">
+            <button id="tab-evidence" class="tab-btn tab-active">Evidence</button>
+            <button id="tab-suspects" class="tab-btn">Suspects</button>
+          </div>
 
-        <!-- Suspects tab -->
-        <div id="suspect-panel" style="display:none">
-          <div id="sp-title">Suspects</div>
-          <div id="suspect-list"></div>
+          <!-- Case File tab -->
+          <div id="case-file">
+            <div id="cfTitle">Case File</div>
+          </div>
+
+          <!-- Suspects tab -->
+          <div id="suspect-panel" style="display:none">
+            <div id="sp-title">Suspects</div>
+            <div id="suspect-list"></div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Chat Area -->
-    <div id="chat-area">
-      <div id="chat-log"></div>
-      <div id="chat-controls">
-        <div id="chat-input-row">
-          <input id="chat-input" type="text" placeholder="Ask the witness…" autocomplete="off">
-          <button id="btn-submit">Submit</button>
-        </div>
-        <div id="chat-btn-row">
-          <button id="btn-summarize">Summarize</button>
-          <button id="btn-confirm-merge">Confirm Merge</button>
-          <button id="btn-cancel-sum">Cancel</button>
-          <button id="btn-accuse" disabled style="display:none">Accuse</button>
+      <!-- Chat Area -->
+      <div id="chat-area">
+        <div id="chat-log"></div>
+        <div id="chat-controls">
+          <div id="chat-input-row">
+            <input id="chat-input" type="text" placeholder="Ask the witness…" autocomplete="off">
+            <button id="btn-submit">Submit</button>
+          </div>
+          <div id="chat-btn-row">
+            <button id="btn-summarize">Summarize</button>
+            <button id="btn-confirm-merge">Confirm Merge</button>
+            <button id="btn-cancel-sum">Cancel</button>
+            <button id="btn-accuse" disabled style="display:none">Accuse</button>
+          </div>
         </div>
       </div>
     </div>
@@ -272,4 +373,5 @@
 
   <script type="module" src="/src/main.js"></script>
 </body>
+
 </html>

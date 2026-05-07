@@ -380,20 +380,27 @@ function setupEvents() {
 
   // Landing buttons
   document.getElementById('btn-new-game').addEventListener('click', showLevelSelect);
-  document.getElementById('btn-continue').addEventListener('click', async () => {
-    try {
-      const saved = await loadCurrentGame();
-      if (saved) initGame(saved, saved.currentCaseId || 'medium');
-      else showLevelSelect();
-    } catch { showLevelSelect(); }
-  });
-  document.getElementById('btn-go-tutorial').addEventListener('click', () => {
-    renderOnboarding(null, {
-      type: 'tutorial',
-      onStart: () => initTutorial(),
-      onBack: () => showLanding()
+  const btnCont = document.getElementById('btn-continue');
+  if (btnCont) {
+    btnCont.addEventListener('click', async () => {
+      try {
+        const saved = await loadCurrentGame();
+        if (saved) initGame(saved, saved.currentCaseId || 'medium');
+        else showLevelSelect();
+      } catch { showLevelSelect(); }
     });
-  });
+  }
+
+  const btnTut = document.getElementById('btn-go-tutorial');
+  if (btnTut) {
+    btnTut.addEventListener('click', () => {
+      renderOnboarding(null, {
+        type: 'tutorial',
+        onStart: () => initTutorial(),
+        onBack: () => showLanding()
+      });
+    });
+  }
 
   // Level select buttons
   document.getElementById('btn-level-back').addEventListener('click', () => showLanding());
@@ -431,7 +438,10 @@ function setupEvents() {
   });
 
   // Replay / back to landing
-  document.getElementById('btn-replay').addEventListener('click', () => showLanding());
+  const btnReplay = document.getElementById('btn-replay');
+  if (btnReplay) {
+    btnReplay.addEventListener('click', () => showLanding());
+  }
 
   // Home button
   document.getElementById('btn-home').addEventListener('click', () => {
