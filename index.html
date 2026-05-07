@@ -97,6 +97,62 @@
     <button id="btn-skip-tut">Skip Tutorial →</button>
   </div>
 
+  <!-- ══ ONBOARDING SCREEN (CASE FILE) ═══════════════════════ -->
+  <div id="screen-onboarding" style="display:none">
+    <div id="onboarding-inner">
+      <div id="dossier-folder">
+        <button id="btn-onboarding-back">← Back</button>
+        <!-- Folder Flap (Cover) -->
+        <div id="dossier-flap">
+          <div class="flap-front">
+            <div id="dossier-stamp">CONFIDENTIAL</div>
+            <div id="dossier-case-id">CASE FILE #---</div>
+            <div id="dossier-difficulty-badge">EASY</div>
+            <h2 id="dossier-title">CASE TITLE</h2>
+            <div id="dossier-seal">◈</div>
+          </div>
+          <div class="flap-back"></div>
+        </div>
+
+        <!-- Documents (Inside) -->
+        <div id="dossier-docs">
+          <!-- Doc 1: Incident Report -->
+          <div class="dossier-doc doc-report">
+            <h3>INCIDENT REPORT</h3>
+            <div class="doc-field"><span class="df-l">SUBJECT:</span> <span id="doc-title">---</span></div>
+            <div class="doc-field"><span class="df-l">CLASSIFICATION:</span> <span id="doc-difficulty">---</span></div>
+            <div class="doc-field"><span class="df-l">MEMORY BUDGET:</span> <span id="doc-tokens">---</span></div>
+            <hr>
+            <p id="doc-description">---</p>
+            <div id="doc-witness-quote"></div>
+          </div>
+
+          <!-- Doc 2: Suspect Roster -->
+          <div class="dossier-doc doc-suspects">
+            <h3>SUSPECT ROSTER</h3>
+            <div id="dossier-suspect-list"></div>
+          </div>
+
+          <!-- Doc 3: Evidence Inventory -->
+          <div class="dossier-doc doc-evidence">
+            <h3>EVIDENCE INVENTORY</h3>
+            <div class="evidence-stamp">PARTIAL DISCLOSURE — FURTHER EVIDENCE IN FIELD</div>
+            <div id="dossier-evidence-list"></div>
+          </div>
+
+          <!-- Doc 4: Investigator Briefing (Rules) -->
+          <div class="dossier-doc doc-rules">
+            <h3>BRIEFING</h3>
+            <ul id="dossier-rules-list"></ul>
+            <p class="rules-warning" id="rules-warning">Details may be lost to summarization. Preserve what matters.</p>
+          </div>
+        </div>
+
+        <button id="btn-open-investigation">▶ OPEN INVESTIGATION</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ══ MAIN GAME SCREEN ═════════════════════════════════════ -->
   <div id="screen-game" style="display:none">
 
