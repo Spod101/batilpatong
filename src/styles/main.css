@@ -1,6 +1,6 @@
 /* ── reset ──────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { width: 100%; height: 100%; overflow: hidden; }
+html, body { width: 100%; height: 100%; height: 100dvh; overflow: hidden; }
 body {
   background: #f4ecdf;
   color: #3e2723;
@@ -8,6 +8,11 @@ body {
   font-size: 14px;
   user-select: none;
   -webkit-user-select: none;
+  /* Safe-area insets for iPhone notch / home indicator */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
 }
 
 /* ── animations ─────────────────────────────────────────── */
@@ -127,7 +132,7 @@ body {
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 100vh;
+  height: 100dvh;
   transition: margin-left .35s;
 }
 
@@ -138,7 +143,7 @@ body {
   align-items: center;
   justify-content: center;
   width: 100%;
-  height: 100vh;
+  height: 100dvh;
   overflow-y: auto;
   padding: 40px 20px;
   gap: 18px;
@@ -315,7 +320,7 @@ body {
 
 /* ── case file ───────────────────────────────────────────── */
 #case-file {
-  padding: 14px 10px;
+  padding: 14px 14px 14px 10px; /* extra right padding for scrollbar clearance */
   background: #c9a16f;
   background-image:
     radial-gradient(circle at 18px 22px, rgba(255,255,255,0.18) 0 2px, transparent 2px),
@@ -378,7 +383,7 @@ body {
 /* ── suspect panel ───────────────────────────────────────── */
 #suspect-panel {
   flex-direction: column;
-  padding: 12px 10px;
+  padding: 12px 14px 12px 10px; /* extra right for scrollbar */
   background: #fdfaf3;
   overflow-y: auto;
   flex: 1;
@@ -433,6 +438,7 @@ body {
 /* ── chat area ───────────────────────────────────────────── */
 #chat-area {
   flex-shrink: 0;
+  height: 30vh;        /* fixed — never grows or shrinks with content */
   display: flex;
   flex-direction: column;
   background: #f4ecdf;
@@ -445,9 +451,9 @@ body {
   padding: 10px 14px;
   display: flex;
   flex-direction: column;
+  /* no justify-content: flex-end — JS scrollTop handles bottom anchoring */
   gap: 8px;
-  min-height: 60px;
-  max-height: 28vh;
+  min-height: 0;
   box-shadow: inset 0 4px 6px -4px rgba(0,0,0,0.1);
 }
 .chat-msg {
@@ -530,7 +536,7 @@ button:disabled, button.locked { opacity:.5; cursor:not-allowed; box-shadow: non
   position: fixed;
   left: 0; top: 0;
   width: 290px;
-  height: 100vh;
+  height: 100dvh;
   background: rgba(253,250,243,.95);
   border-right: 4px solid #d84315;
   padding: 24px 18px;
@@ -621,6 +627,106 @@ button:disabled, button.locked { opacity:.5; cursor:not-allowed; box-shadow: non
 #accuse-result.ok   { color:#2e7d32; background: #e8f5e9; border: 2px solid #2e7d32; }
 #accuse-result.fail { color:#c62828; background: #ffebee; border: 2px solid #c62828; }
 .ab-row { display:flex; gap:10px; justify-content:center; }
+
+/* ── home button (token bar) ─────────────────────────────── */
+#btn-home {
+  flex-shrink: 0;
+  background: #eaddc5;
+  border: 2px solid #3e2723;
+  color: #3e2723;
+  font-size: 14px;
+  font-weight: bold;
+  padding: 0 10px;
+  height: 28px;
+  min-height: 28px;
+  border-radius: 6px;
+  box-shadow: 2px 2px 0px #3e2723;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+#btn-home:hover { transform: translate(-1px,-1px); box-shadow: 3px 3px 0px #3e2723; }
+#btn-home:active { transform: translate(1px,1px); box-shadow: 1px 1px 0px #3e2723; }
+
+/* ── home confirmation modal ─────────────────────────────── */
+#home-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(62,39,35,.85);
+  z-index: 210;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(2px);
+}
+#home-modal.open { display: flex; }
+#home-modal-box {
+  background: #fdfaf3;
+  border: 4px solid #3e2723;
+  border-radius: 8px;
+  padding: 22px 18px;
+  width: 92%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 8px 8px 0px rgba(0,0,0,0.25);
+  box-sizing: border-box;
+}
+#home-modal-box h2 {
+  font-size: 16px;
+  font-weight: bold;
+  color: #3e2723;
+  letter-spacing: 2px;
+  text-align: center;
+  text-transform: uppercase;
+  border-bottom: 2px dashed #8a6a50;
+  padding-bottom: 10px;
+}
+#home-modal-box .hm-sub {
+  font-size: 12px;
+  color: #5d4037;
+  text-align: center;
+  font-weight: bold;
+}
+.hm-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+#btn-home-save, #btn-home-giveup, #btn-home-cancel {
+  white-space: normal;      /* override base button nowrap */
+  word-break: break-word;
+  width: 100%;
+  text-align: left;
+  line-height: 1.5;
+  padding: 12px 14px;
+}
+#btn-home-save {
+  background: #c8e6c9;
+  border-color: #2e7d32;
+  color: #1b5e20;
+  box-shadow: 3px 3px 0px #2e7d32;
+  font-size: 13px;
+}
+#btn-home-save:hover { box-shadow: 4px 4px 0px #2e7d32; }
+#btn-home-save small  { display: block; font-size: 10px; font-weight: normal; color: #388e3c; margin-top: 3px; }
+#btn-home-giveup {
+  background: #ffcdd2;
+  border-color: #c62828;
+  color: #b71c1c;
+  box-shadow: 3px 3px 0px #c62828;
+  font-size: 13px;
+}
+#btn-home-giveup:hover { box-shadow: 4px 4px 0px #c62828; }
+#btn-home-giveup small { display: block; font-size: 10px; font-weight: normal; color: #c62828; margin-top: 3px; }
+#btn-home-cancel {
+  align-self: center;
+  width: auto;
+  text-align: center;
+  background: #eaddc5;
+  font-size: 12px;
+  padding: 8px 24px;
+}
 
 /* ── end screen ──────────────────────────────────────────── */
 /* ── end screen details ──────────────────────────────────── */
@@ -799,34 +905,112 @@ button:disabled, button.locked { opacity:.5; cursor:not-allowed; box-shadow: non
 @media (max-width: 639px) {
   #landing-title { font-size:22px; letter-spacing:4px; }
   #landing-logo  { font-size:40px; }
+  /* Landing card should fit small screens */
+  #landing-inner { padding: 28px 20px; gap: 14px; }
+  #landing-menu  { width: 100%; }
+  #landing-menu button { padding: 14px 16px; min-height: 48px; }
 
+  /* Tutorial panel — bottom sheet */
   #tut-panel {
     top: auto; bottom: 0; left: 0;
-    width: 100%; height: 210px; max-height: 210px;
+    width: 100%; height: 200px; max-height: 200px;
     border-right: none; border-top: 2px solid rgba(255,179,0,.6);
     animation: none;
-    padding: 10px 12px;
+    padding: 10px 14px;
     gap: 6px;
     overflow-y: auto;
   }
-  #tut-badge  { font-size:8px; }
-  #tut-title  { font-size:11px; }
-  #tut-msg    { font-size:10px; line-height:1.5; }
-  #tut-hint, #tut-ok { font-size:10px; }
-  #btn-tut-next, #btn-start-game { font-size:10px; padding:5px 10px; }
+  #tut-badge  { font-size:9px; }
+  #tut-title  { font-size:12px; }
+  #tut-msg    { font-size:11px; line-height:1.5; }
+  #tut-hint, #tut-ok { font-size:11px; }
+  #btn-tut-next, #btn-start-game { font-size:11px; padding:8px 12px; min-height:40px; }
   #btn-skip-tut { margin-top:4px; }
 
   body.tut-active #screen-game {
-    height: calc(100vh - 210px);
-    height: calc(100dvh - 210px);
+    height: calc(100dvh - 200px);
   }
-  #chat-log { max-height:12vh; }
-  #game-middle { grid-template-columns:1fr; grid-template-rows:1fr auto; }
-  #right-panel { max-height:120px; }
-  #case-file, #suspect-panel { flex-direction:row; flex-wrap:wrap; overflow-x:auto; max-height:90px; }
-  #cfTitle, #sp-title { width:100%; }
-  .fact-token { font-size:10px; padding:4px 6px; }
-  .suspect-card { font-size:10px; }
+
+  /* ── Token bar compact ──────────────────────────────────── */
+  #token-bar-wrap { padding: 6px 10px; gap: 7px; }
+  #tbTitle { font-size: 10px; }
+  #tbLabel  { font-size: 10px; min-width: 52px; }
+  #qCounter { font-size: 10px; padding: 2px 6px; }
+  #btn-home { font-size: 13px; height: 26px; min-height: 26px; padding: 0 8px; }
+
+  /* ── Screen game: flex column, fixed total height ───────── */
+  #screen-game {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    overflow: hidden;   /* hard clip — nothing can overflow */
+  }
+
+  /* ── Game middle: fixed height, stacks memory + evidence ── */
+  #game-middle {
+    flex: 0 0 52dvh;    /* never grow, never shrink — always 52dvh */
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 18dvh 34dvh;
+    min-height: 0;
+    border-bottom: 2px solid #3e2723;
+  }
+
+  /* Memory cloud: horizontal scrolling bubble strip */
+  #memory-cloud {
+    height: 18dvh;
+    padding: 26px 10px 8px;
+    gap: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex-wrap: nowrap;
+    align-content: center;
+    border-bottom: 2px solid #3e2723;
+  }
+  .memory-bubble { flex-shrink: 0; max-width: 160px; font-size: 12px; }
+
+  /* Right panel: vertical scrollable list */
+  #right-panel {
+    height: 34dvh;
+    max-height: none;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  #case-file, #suspect-panel {
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1;
+    max-height: none;
+  }
+  #cfTitle, #sp-title { width: 100%; flex-shrink: 0; }
+
+  /* Bigger, easier-to-grab fact cards */
+  .fact-token { font-size: 13px; padding: 11px 10px; min-height: 48px; line-height: 1.4; }
+  .suspect-card { font-size: 12px; }
+  .sc-name { font-size: 13px; }
+  .sc-desc { font-size: 12px; }
+  .btn-eliminate { min-height: 38px; padding: 6px 10px; font-size: 11px; }
+
+  /* ── Chat area: fills ALL remaining height, never more ──── */
+  #chat-area {
+    flex: 1 1 0;        /* grow to fill, shrink if needed, basis 0 */
+    height: auto;       /* cancel the desktop 30vh fixed height */
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  #chat-log { flex: 1; min-height: 0; overflow-y: auto; }
+
+  /* Prevent iOS zoom on input focus */
+  #chat-input { font-size: 16px; padding: 10px 12px; }
+
+  /* Touch-friendly buttons */
+  button { min-height: 42px; }
+  #chat-controls { padding: 8px 12px; gap: 6px; flex-shrink: 0; }
+  #chat-btn-row  { gap: 6px; }
 }
 @media (min-width: 640px) {
   body.tut-active #screen-game { margin-left:274px; width:calc(100vw - 274px); }

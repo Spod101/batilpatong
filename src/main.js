@@ -389,6 +389,29 @@ function setupEvents() {
   // Replay / back to landing
   document.getElementById('btn-replay').addEventListener('click', () => showLanding());
 
+  // Home button — open confirmation modal
+  document.getElementById('btn-home').addEventListener('click', () => {
+    document.getElementById('home-modal').classList.add('open');
+  });
+  document.getElementById('btn-home-cancel').addEventListener('click', () => {
+    document.getElementById('home-modal').classList.remove('open');
+  });
+  document.getElementById('btn-home-save').addEventListener('click', () => {
+    document.getElementById('home-modal').classList.remove('open');
+    showLanding();
+  });
+  document.getElementById('btn-home-giveup').addEventListener('click', async () => {
+    document.getElementById('home-modal').classList.remove('open');
+    try { await clearCurrentGame(); } catch { /* ignore */ }
+    showLanding();
+  });
+  // Close on backdrop click
+  document.getElementById('home-modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('home-modal')) {
+      document.getElementById('home-modal').classList.remove('open');
+    }
+  });
+
   // Submit
   document.getElementById('btn-submit').addEventListener('click', () => {
     if (S.locked.has('btn-submit')) return;
