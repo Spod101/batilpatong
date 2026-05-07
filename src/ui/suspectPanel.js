@@ -9,20 +9,25 @@ export function renderSuspects(onEliminate) {
   if (!list) return;
   list.innerHTML = '';
   S.suspects.forEach(susp => {
-    const el = document.createElement('div');
     const isElim = S.eliminatedIds.has(susp.id);
+    const el = document.createElement('div');
     el.className = 'suspect-card' + (isElim ? ' eliminated' : '');
     el.dataset.id = susp.id;
     el.innerHTML = `
-      <div class="sc-header">
-        <span class="sc-name">${esc(susp.name)}</span>
-        <span class="sc-role">${esc(susp.role)}</span>
+      <div class="sc-portrait-wrap">
+        <img class="sc-portrait" src="${esc(susp.portrait || '')}" alt="${esc(susp.name)}" loading="lazy" onerror="this.style.display='none'">
       </div>
-      <div class="sc-desc">${esc(susp.description)}</div>
-      <div class="sc-alibi">${esc(susp.alibi)}</div>
-      ${!isElim
-        ? `<button class="btn-eliminate" data-id="${susp.id}">Eliminate</button>`
-        : '<div class="sc-elim-badge">◆ Eliminated</div>'}
+      <div class="sc-body">
+        <div class="sc-header">
+          <span class="sc-name">${esc(susp.name)}</span>
+          <span class="sc-role">${esc(susp.role)}</span>
+        </div>
+        <div class="sc-desc">${esc(susp.description)}</div>
+        <div class="sc-alibi">${esc(susp.alibi)}</div>
+        ${!isElim
+          ? `<button class="btn-eliminate" data-id="${susp.id}">Eliminate</button>`
+          : '<div class="sc-elim-badge">◆ Eliminated</div>'}
+      </div>
     `;
     list.appendChild(el);
   });
@@ -34,7 +39,7 @@ export function renderSuspects(onEliminate) {
   });
 }
 
-// Render suspect cards inside the accuse modal
+// Render suspect cards inside the accuse modal (mugshot grid)
 export function renderAccuseSuspects(selectedId, onSelect) {
   const box = document.getElementById('accuse-suspects');
   if (!box) return;
@@ -46,9 +51,15 @@ export function renderAccuseSuspects(selectedId, onSelect) {
     el.className = 'accuse-card' + (isElim ? ' elim' : '') + (isSel ? ' selected' : '');
     el.dataset.id = susp.id;
     el.innerHTML = `
-      <span class="ac-name">${esc(susp.name)}</span>
-      <span class="ac-role">${esc(susp.role)}</span>
-      ${isElim ? '<span class="ac-elim">Eliminated</span>' : ''}
+      <div class="ac-photo-wrap">
+        <img class="ac-photo" src="${esc(susp.portrait || '')}" alt="${esc(susp.name)}" loading="lazy" onerror="this.style.display='none'">
+        ${isElim ? '<div class="ac-elim-overlay">CLEARED</div>' : ''}
+        ${isSel ? '<div class="ac-selected-stamp">ACCUSED</div>' : ''}
+      </div>
+      <div class="ac-info">
+        <span class="ac-name">${esc(susp.name)}</span>
+        <span class="ac-role">${esc(susp.role)}</span>
+      </div>
     `;
     if (!isElim) {
       el.addEventListener('click', () => onSelect(susp.id));
