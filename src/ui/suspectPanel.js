@@ -15,7 +15,8 @@ export function renderSuspects(onEliminate) {
     el.dataset.id = susp.id;
     el.innerHTML = `
       <div class="sc-portrait-wrap">
-        <img class="sc-portrait" src="${esc(susp.portrait || '')}" alt="${esc(susp.name)}" loading="lazy" onerror="this.style.display='none'">
+        <img class="sc-portrait" src="${esc(susp.portrait || '')}" alt="${esc(susp.name)}" loading="lazy" onerror="this.parentElement.style.display='none'">
+        ${isElim ? '<div class="sc-elim-overlay">CLEARED</div>' : ''}
       </div>
       <div class="sc-body">
         <div class="sc-header">

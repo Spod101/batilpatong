@@ -58,8 +58,8 @@ function showLevelSelect() {
 
 // ── Tab switching ─────────────────────────────────────────
 function switchTab(tab) {
-  document.getElementById('case-file').style.display     = tab === 'evidence' ? 'flex' : 'none';
-  document.getElementById('suspect-panel').style.display = tab === 'suspects' ? 'flex' : 'none';
+  document.getElementById('case-file').style.display     = tab === 'evidence' ? 'grid' : 'none';
+  document.getElementById('suspect-panel').style.display = tab === 'suspects' ? 'grid' : 'none';
   document.getElementById('tab-evidence').classList.toggle('tab-active', tab === 'evidence');
   document.getElementById('tab-suspects').classList.toggle('tab-active', tab === 'suspects');
 }
