@@ -14,7 +14,7 @@ import { updateBar }  from './ui/tokenBar.js';
 import { renderCloud, animateForgot, setupDropZone } from './ui/memoryCloud.js';
 import { renderCF }   from './ui/caseFile.js';
 import { addChat, addChatPending, resolveChatPending, updateQCounter, getInputValue, clearInput } from './ui/chatTerminal.js';
-import { tutHint, setTutMsg } from './ui/tutorialPanel.js';
+import { tutHint, setTutMsg, toggleTutCollapse } from './ui/tutorialPanel.js';
 import { renderSuspects, renderAccuseSuspects } from './ui/suspectPanel.js';
 import {
   isTutorialComplete, setTutorialComplete,
@@ -427,6 +427,7 @@ function setupEvents() {
   });
 
   // Tutorial navigation
+  document.getElementById('btn-tut-collapse')?.addEventListener('click', toggleTutCollapse);
   document.getElementById('btn-tut-next').addEventListener('click', advanceTut);
   document.getElementById('btn-skip-tut').addEventListener('click', async () => {
     await setTutorialComplete().catch(() => {});

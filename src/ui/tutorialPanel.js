@@ -30,7 +30,15 @@ export function showTutPanel() {
 
 export function hideTutPanel() {
   document.getElementById('tut-panel').classList.add('hidden');
-  document.body.classList.remove('tut-active');
+  document.body.classList.remove('tut-active', 'tut-collapsed');
+}
+
+export function toggleTutCollapse() {
+  const panel = document.getElementById('tut-panel');
+  const btn   = document.getElementById('btn-tut-collapse');
+  const collapsed = panel.classList.toggle('tut-collapsed');
+  document.body.classList.toggle('tut-collapsed', collapsed);
+  if (btn) btn.textContent = collapsed ? '▲' : '▼';
 }
 
 export function updateStepNum(n) {

@@ -82,10 +82,11 @@ function setupTouch(el, fid) {
 
   el.addEventListener('touchmove', e => {
     if (!active) return;
+    e.preventDefault(); // prevent page scroll during drag
     const t = e.touches[0];
     ghost.style.left = (t.clientX - 70) + 'px';
     ghost.style.top  = (t.clientY - 22) + 'px';
-  }, { passive: true });
+  }, { passive: false });
 
   el.addEventListener('touchend', e => {
     if (!active) return;

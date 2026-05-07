@@ -22,6 +22,7 @@ body {
 @keyframes pulseGlowAmber{ 0%,100% { box-shadow:2px 2px 5px rgba(255,165,0,0.2) } 50% { box-shadow:4px 4px 12px rgba(255,165,0,0.4) } }
 @keyframes tutHL         { 0%,100% { box-shadow:0 0 8px #d84315,0 0 18px rgba(216,67,21,.3) } 50% { box-shadow:0 0 18px #d84315,0 0 36px rgba(216,67,21,.5) } }
 @keyframes slideInLeft   { from { transform:translateX(-105%); opacity:0 } to { transform:translateX(0); opacity:1 } }
+@keyframes slideInTop    { from { transform:translateY(-105%); opacity:0 } to { transform:translateY(0); opacity:1 } }
 @keyframes chatIn        { from { opacity:0; transform:translateY(6px) } to { opacity:1; transform:translateY(0) } }
 @keyframes tokenPulse    { 0%,100% { opacity:1 } 50% { opacity:.55 } }
 @keyframes glowBtn       { 0%,100% { box-shadow:0 4px 6px rgba(0,0,0,0.1) } 50% { box-shadow:0 8px 15px rgba(0,0,0,0.15) } }
@@ -1270,7 +1271,47 @@ button:disabled, button.locked { opacity: .25; cursor: not-allowed; }
 #btn-confirm-merge { background: rgba(255,152,0,0.06); border-color: #7a5000; color: #c07800; display: none; }
 #btn-cancel-sum { background: #0a0806; border-color: #1e1808; color: #3a2e18; display: none; }
 
+/* ── drag ghost (touch drag) ─────────────────────────────── */
+#drag-ghost {
+  position: fixed;
+  background: #1a1408;
+  border: 1px solid #d4af37;
+  border-left: 3px solid #d4af37;
+  color: #c0a060;
+  padding: 6px 10px;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  pointer-events: none;
+  z-index: 9999;
+  display: none;
+  max-width: 160px;
+  box-shadow: 3px 3px 8px rgba(0,0,0,0.5);
+  opacity: 0.9;
+}
+
 /* ── tutorial panel ──────────────────────────────────────── */
+#tut-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  border-bottom: 2px dashed #d84315;
+  padding-bottom: 8px;
+}
+
+#btn-tut-collapse {
+  display: none; /* shown only on mobile via media query */
+  background: transparent;
+  border: 1px solid rgba(216,67,21,0.4);
+  color: #d84315;
+  padding: 2px 8px;
+  font-size: 11px;
+  min-height: unset;
+  letter-spacing: 0;
+  flex-shrink: 0;
+}
+
 #tut-panel {
   position: fixed;
   left: 0; top: 0;
@@ -1289,7 +1330,7 @@ button:disabled, button.locked { opacity: .25; cursor: not-allowed; }
   box-shadow: 4px 0 15px rgba(0,0,0,0.1);
 }
 #tut-panel.hidden { display:none; }
-#tut-badge  { font-size:11px; font-weight:bold; color:#d84315; letter-spacing:3px; text-transform:uppercase; border-bottom:2px dashed #d84315; padding-bottom:8px; }
+#tut-badge  { font-size:11px; font-weight:bold; color:#d84315; letter-spacing:3px; text-transform:uppercase; }
 #tut-title  { font-size:16px; color:#3e2723; font-weight:bold; line-height:1.45; }
 #tut-msg    { font-size:13px; color:#5d4037; line-height:1.65; white-space:pre-line; }
 #tut-hint   { font-size:11px; font-weight:bold; color:#bf360c; min-height:14px; font-style:italic; background: rgba(216,67,21,0.08); padding: 6px; border: 1px solid rgba(216,67,21,0.25); }
@@ -1433,6 +1474,74 @@ button:disabled, button.locked { opacity: .25; cursor: not-allowed; }
   /* Accuse modal: better grid on small phones */
   #accuse-suspects { grid-template-columns: repeat(3, 1fr); gap: 8px; }
   #accuse-box { padding: 20px; gap: 14px; }
+
+  /* ── Tutorial panel: top horizontal banner on mobile ── */
+  #tut-panel {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: auto;
+    width: 100%;
+    height: 44dvh;
+    max-height: 44dvh;
+    border-right: none;
+    border-bottom: 4px solid #d84315;
+    padding: 10px 14px 8px;
+    gap: 8px;
+    animation: slideInTop .4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    overflow-y: auto;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    z-index: 200;
+  }
+
+  /* Collapsed state: show only badge row */
+  #tut-panel.tut-collapsed {
+    height: 7dvh;
+    max-height: 7dvh;
+    overflow: hidden;
+    padding: 0 14px;
+    justify-content: center;
+  }
+  #tut-panel.tut-collapsed > *:not(#tut-panel-header) {
+    display: none !important;
+  }
+  #btn-tut-collapse { display: block; }
+
+  /* Skip button: don't push to bottom on mobile */
+  #btn-skip-tut { margin-top: 6px; }
+  /* Font tweaks for smaller panel */
+  #tut-title { font-size: 14px; }
+  #tut-msg   { font-size: 12px; line-height: 1.55; }
+
+  /* ── Game screen sits below tutorial panel ── */
+  body.tut-active #screen-game {
+    position: fixed;
+    top: 44dvh;
+    left: 0; right: 0; bottom: 0;
+    height: 56dvh;
+    width: 100%;
+    margin-left: 0 !important; /* cancel desktop rule */
+  }
+
+  /* Collapsed: game gets almost full height */
+  body.tut-active.tut-collapsed #screen-game {
+    top: 7dvh;
+    height: 93dvh;
+  }
+
+  /* Adjust game-middle for 56dvh total height */
+  body.tut-active #game-middle {
+    flex: 0 0 36dvh;
+    grid-template-rows: 14dvh 22dvh;
+  }
+  body.tut-active #memory-cloud { height: 14dvh; }
+  body.tut-active #right-panel  { height: 22dvh; }
+
+  /* Collapsed: restore full-height game-middle proportions */
+  body.tut-active.tut-collapsed #game-middle {
+    flex: 0 0 52dvh;
+    grid-template-rows: 18dvh 34dvh;
+  }
+  body.tut-active.tut-collapsed #memory-cloud { height: 18dvh; }
+  body.tut-active.tut-collapsed #right-panel  { height: 34dvh; }
 }
 @media (min-width: 640px) {
   body.tut-active #screen-game { margin-left:274px; width:calc(100vw - 274px); }
