@@ -17,7 +17,6 @@
 
 <body>
 
-  <!-- ══ LANDING SCREEN ══════════════════════════════════════ -->
   <div id="screen-landing">
     <!-- Background Layer -->
     <div id="landing-bg"></div>
@@ -89,7 +88,6 @@
     </footer>
   </div>
 
-  <!-- ══ LEVEL SELECT SCREEN ════════════════════════════════ -->
   <div id="screen-level" style="display:none">
     <!-- Background Layer (Reuse landing bg style via class or similar) -->
     <div id="level-bg"></div>
@@ -176,7 +174,6 @@
     </div>
   </div>
 
-  <!-- ══ TUTORIAL PANEL ═══════════════════════════════════════ -->
   <div id="tut-panel" class="hidden">
     <div id="tut-badge">Training — Step <span id="tut-step-num">0</span></div>
     <div id="tut-title"></div>
@@ -191,12 +188,10 @@
     <button id="btn-skip-tut">Skip Tutorial →</button>
   </div>
 
-  <!-- ══ ONBOARDING SCREEN (CASE FILE) ═══════════════════════ -->
   <div id="screen-onboarding" style="display:none">
     <div id="onboarding-inner">
       <div id="dossier-folder">
         <button id="btn-onboarding-back">← Back</button>
-        <!-- Folder Flap (Cover) -->
         <div id="dossier-flap">
           <div class="flap-front">
             <div id="dossier-stamp">CONFIDENTIAL</div>
@@ -208,7 +203,6 @@
           <div class="flap-back"></div>
         </div>
 
-        <!-- Documents (Inside) -->
         <div id="dossier-docs">
           <!-- Doc 1: Incident Report -->
           <div class="dossier-doc doc-report">
@@ -221,20 +215,17 @@
             <div id="doc-witness-quote"></div>
           </div>
 
-          <!-- Doc 2: Suspect Roster -->
           <div class="dossier-doc doc-suspects">
             <h3>SUSPECT ROSTER</h3>
             <div id="dossier-suspect-list"></div>
           </div>
 
-          <!-- Doc 3: Evidence Inventory -->
           <div class="dossier-doc doc-evidence">
             <h3>EVIDENCE INVENTORY</h3>
             <div class="evidence-stamp">PARTIAL DISCLOSURE — FURTHER EVIDENCE IN FIELD</div>
             <div id="dossier-evidence-list"></div>
           </div>
 
-          <!-- Doc 4: Investigator Briefing (Rules) -->
           <div class="dossier-doc doc-rules">
             <h3>BRIEFING</h3>
             <ul id="dossier-rules-list"></ul>
@@ -247,7 +238,6 @@
     </div>
   </div>
 
-  <!-- ══ MAIN GAME SCREEN ═════════════════════════════════════ -->
   <div id="screen-game" style="display:none">
     <div id="game-bg"></div>
     <div id="game-overlay"></div>
