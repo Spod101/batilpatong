@@ -20,6 +20,8 @@ import {
   isTutorialComplete, setTutorialComplete,
   loadCurrentGame, clearCurrentGame,
 } from './db/indexdb.js';
+import { CASES } from './game/cases.js';
+import { renderOnboarding } from './ui/onboarding.js';
 
 // ── PWA service worker ───────────────────────────────────
 if ('serviceWorker' in navigator) {
@@ -31,6 +33,7 @@ async function showLanding() {
   S.phase = 'landing';
   document.getElementById('screen-landing').style.display = 'flex';
   document.getElementById('screen-level').style.display   = 'none';
+  document.getElementById('screen-onboarding').style.display = 'none';
   document.getElementById('screen-game').style.display    = 'none';
   document.getElementById('screen-end').style.display     = 'none';
 
@@ -48,6 +51,7 @@ async function showLanding() {
 function showLevelSelect() {
   document.getElementById('screen-landing').style.display = 'none';
   document.getElementById('screen-level').style.display   = 'flex';
+  document.getElementById('screen-onboarding').style.display = 'none';
   document.getElementById('screen-game').style.display    = 'none';
   document.getElementById('screen-end').style.display     = 'none';
 }
@@ -383,13 +387,37 @@ function setupEvents() {
       else showLevelSelect();
     } catch { showLevelSelect(); }
   });
-  document.getElementById('btn-go-tutorial').addEventListener('click', () => initTutorial());
+  document.getElementById('btn-go-tutorial').addEventListener('click', () => {
+    renderOnboarding(null, {
+      type: 'tutorial',
+      onStart: () => initTutorial(),
+      onBack: () => showLanding()
+    });
+  });
 
   // Level select buttons
   document.getElementById('btn-level-back').addEventListener('click', () => showLanding());
-  document.getElementById('btn-level-easy').addEventListener('click', () => initGame(null, 'easy'));
-  document.getElementById('btn-level-medium').addEventListener('click', () => initGame(null, 'medium'));
-  document.getElementById('btn-level-hard').addEventListener('click', () => initGame(null, 'hard'));
+  document.getElementById('btn-level-easy').addEventListener('click', () => {
+    document.getElementById('screen-level').style.display = 'none';
+    renderOnboarding(CASES.easy, {
+      onStart: () => initGame(null, 'easy'),
+      onBack: () => showLevelSelect()
+    });
+  });
+  document.getElementById('btn-level-medium').addEventListener('click', () => {
+    document.getElementById('screen-level').style.display = 'none';
+    renderOnboarding(CASES.medium, {
+      onStart: () => initGame(null, 'medium'),
+      onBack: () => showLevelSelect()
+    });
+  });
+  document.getElementById('btn-level-hard').addEventListener('click', () => {
+    document.getElementById('screen-level').style.display = 'none';
+    renderOnboarding(CASES.hard, {
+      onStart: () => initGame(null, 'hard'),
+      onBack: () => showLevelSelect()
+    });
+  });
 
   // Tutorial navigation
   document.getElementById('btn-tut-next').addEventListener('click', advanceTut);
