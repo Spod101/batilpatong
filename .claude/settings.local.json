@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(mv \"d:/files/My Files/CODES/batilpatong/scripts/generate-icons.js\" \"d:/files/My Files/CODES/batilpatong/scripts/generate-icons.cjs\")",
-      "Bash(node scripts/generate-icons.cjs)"
+      "Bash(node scripts/generate-icons.cjs)",
+      "Bash(Test-Path \"d:\\\\files\\\\My Files\\\\CODES\\\\batilpatong\\\\README.md\")"
     ]
   }
 }
