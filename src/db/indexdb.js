@@ -66,9 +66,9 @@ export async function saveSession(data) {
     req.onerror   = e => reject(e.target.error);
   });
 
-  // remote save (fire-and-forget)
+  // remote save (awaited so leaderboard fetch sees the new entry)
   if (supabase) {
-    supabase.from('game_sessions').insert({
+    const { error } = await supabase.from('game_sessions').insert({
       session_token:  record.sessionToken,
       player_name:    record.playerName   ?? null,
       case_solved:    record.caseSolved   ?? false,
@@ -81,9 +81,8 @@ export async function saveSession(data) {
       difficulty:     record.difficulty   ?? 'MEDIUM',
       case_id:        record.caseId       ?? 'medium',
       created_at:     record.createdAt,
-    }).then(({ error }) => {
-      if (error) console.warn('Supabase session save failed:', error.message);
     });
+    if (error) console.warn('Supabase session save failed:', error.message);
   }
 }
 

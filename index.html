@@ -333,39 +333,66 @@
     </div>
   </div>
 
+  <!-- ══ NAME ENTRY MODAL ══════════════════════════════════════ -->
+  <div id="name-entry-modal">
+    <div id="name-entry-box">
+      <div id="ne-outcome">CASE CLOSED</div>
+      <div id="ne-score-row">
+        <span id="ne-score">0 pts</span>
+        <span id="ne-rank">CADET</span>
+      </div>
+      <div class="ne-divider"></div>
+      <div class="ne-label">ENTER YOUR DETECTIVE NAME FOR THE LEADERBOARD</div>
+      <input id="ne-input" type="text" maxlength="24" placeholder="Anonymous Detective" autocomplete="off" spellcheck="false">
+      <div class="ne-hint">Press Enter or click Continue to proceed</div>
+      <div class="ne-actions">
+        <button id="btn-ne-skip">Skip</button>
+        <button id="btn-ne-continue">Continue →</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ══ END SCREEN ════════════════════════════════════════════ -->
   <div id="screen-end">
-    <div id="end-title">CASE CLOSED</div>
-    <div id="end-score">0 pts</div>
-    <div id="end-rank">CADET</div>
-
-    <!-- Culprit reveal -->
-    <div id="end-culprit"></div>
-
-    <!-- Player name for leaderboard -->
-    <div id="player-name-section"></div>
-
-    <!-- Stats -->
-    <div id="end-stats">
-      <div class="sr"><span class="sl">Case Solved</span><span class="sv" id="s-solved">—</span></div>
-      <div class="sr"><span class="sl">Difficulty</span><span class="sv" id="s-difficulty">—</span></div>
-      <div class="sr"><span class="sl">Interrogation Tokens</span><span class="sv" id="s-queries">—</span></div>
-      <div class="sr"><span class="sl">Peak Memory</span><span class="sv" id="s-peak">—</span></div>
-      <div class="sr"><span class="sl">Summarize Used</span><span class="sv" id="s-sum">—</span></div>
+    <!-- Header row -->
+    <div id="end-header">
+      <div id="end-title">CASE CLOSED</div>
+      <div id="end-score">0 pts</div>
+      <div id="end-rank">CADET</div>
     </div>
 
-    <div id="end-share"></div>
+    <!-- Two-column main area -->
+    <div id="end-main">
+      <!-- Left column -->
+      <div id="end-left">
+        <div id="end-culprit"></div>
+        <!-- Prompt history + analysis -->
+        <div id="end-prompt-history"></div>
+      </div>
 
-    <!-- Prompt history + analysis -->
-    <div id="end-prompt-history"></div>
-
-    <!-- Leaderboard -->
-    <div id="end-leaderboard">
-      <div class="lb-title">Top Detectives</div>
-      <div id="lb-list"></div>
+      <!-- Right column -->
+      <div id="end-right">
+        <!-- Stats -->
+        <div id="end-stats">
+          <div class="sr"><span class="sl">Case Solved</span><span class="sv" id="s-solved">—</span></div>
+          <div class="sr"><span class="sl">Difficulty</span><span class="sv" id="s-difficulty">—</span></div>
+          <div class="sr"><span class="sl">Interrogation Tokens</span><span class="sv" id="s-queries">—</span></div>
+          <div class="sr"><span class="sl">Peak Memory</span><span class="sv" id="s-peak">—</span></div>
+          <div class="sr"><span class="sl">Summarize Used</span><span class="sv" id="s-sum">—</span></div>
+        </div>
+        <div id="end-share"></div>
+        <!-- Leaderboard -->
+        <div id="end-leaderboard">
+          <div class="lb-title">Top Detectives</div>
+          <div id="lb-list"></div>
+        </div>
+      </div>
     </div>
 
-    <button id="btn-replay">↩ Back to Menu</button>
+    <!-- Footer -->
+    <div id="end-footer">
+      <button id="btn-replay">↩ Back to Menu</button>
+    </div>
   </div>
 
   <!-- Touch drag ghost -->

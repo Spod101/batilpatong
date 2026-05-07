@@ -1,6 +1,36 @@
 import { esc } from './helpers.js';
 import { getPlayerName, setPlayerName } from '../db/indexdb.js';
 
+export function showNameEntry({ solved, score, rank, onContinue }) {
+  const modal = document.getElementById('name-entry-modal');
+  modal.style.display = 'flex';
+
+  const outcomeEl = document.getElementById('ne-outcome');
+  outcomeEl.textContent = solved ? '✓ CASE CLOSED' : '✗ COLD CASE';
+  outcomeEl.className = solved ? 'solved' : 'unsolved';
+  document.getElementById('ne-score').textContent = score + ' pts';
+  document.getElementById('ne-rank').textContent  = rank;
+
+  const input = document.getElementById('ne-input');
+  const saved = getPlayerName();
+  input.value = saved || '';
+  setTimeout(() => input.focus(), 50);
+
+  const proceed = () => {
+    const name = input.value.trim();
+    if (name) setPlayerName(name);
+    modal.style.display = 'none';
+    onContinue();
+  };
+
+  document.getElementById('btn-ne-continue').onclick = proceed;
+  document.getElementById('btn-ne-skip').onclick = () => {
+    modal.style.display = 'none';
+    onContinue();
+  };
+  input.onkeydown = e => { if (e.key === 'Enter') proceed(); };
+}
+
 export function showEndScreen({ solved, queryCount, queryTokenUsed, queryTokenLimit, peakToken, tokenLimit,
                                 usedSummarize, score, rank, accusedId, promptHistory,
                                 difficulty, caseTitle, culpritReveal, suspects }) {
@@ -58,43 +88,8 @@ export function showEndScreen({ solved, queryCount, queryTokenUsed, queryTokenLi
     }
   }
 
-  // ── Player name section ───────────────────────────────
-  _renderNameSection();
-
   // ── Prompt history ────────────────────────────────────
   renderPromptHistory(promptHistory || []);
-}
-
-function _renderNameSection() {
-  const wrap = document.getElementById('player-name-section');
-  if (!wrap) return;
-  const saved = getPlayerName();
-  wrap.innerHTML = `
-    <div class="pn-label">Your detective name for the leaderboard:</div>
-    <div id="pn-input-row">
-      <input id="pn-input" type="text" maxlength="24" placeholder="Anonymous Detective"
-             value="${esc(saved || '')}" autocomplete="off" spellcheck="false">
-      <button id="btn-pn-save">Save</button>
-    </div>
-    <div id="pn-saved" style="display:none">✓ Saved</div>
-  `;
-  document.getElementById('btn-pn-save').addEventListener('click', _saveName);
-  document.getElementById('pn-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') _saveName();
-  });
-}
-
-function _saveName() {
-  const input = document.getElementById('pn-input');
-  if (!input) return;
-  const name = setPlayerName(input.value);
-  input.value = name || '';
-  const saved = document.getElementById('pn-saved');
-  if (saved) {
-    saved.textContent = name ? `✓ Saved as: ${name}` : '✓ Cleared';
-    saved.style.display = 'block';
-    setTimeout(() => { if (saved) saved.style.display = 'none'; }, 2200);
-  }
 }
 
 export function renderPromptHistory(history) {
@@ -148,7 +143,7 @@ export function renderLeaderboard(entries) {
   const list = document.getElementById('lb-list');
   list.innerHTML = '';
   if (!entries || entries.length === 0) {
-    list.innerHTML = '<div style="font-size:10px;color:#3a2a10;padding:8px 0">No solved cases yet. Be the first!</div>';
+    list.innerHTML = '<div style="font-size:10px;color:#555;padding:8px 0;font-style:italic">No solved cases yet. Be the first!</div>';
     return;
   }
   entries.slice(0, 10).forEach((e, i) => {

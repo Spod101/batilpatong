@@ -8,7 +8,7 @@ import { renderCF }   from '../ui/caseFile.js';
 import { addChat, updateQCounter } from '../ui/chatTerminal.js';
 import { hideTutPanel } from '../ui/tutorialPanel.js';
 import { renderSuspects } from '../ui/suspectPanel.js';
-import { showEndScreen, renderLeaderboard } from '../ui/endScreen.js';
+import { showNameEntry, showEndScreen, renderLeaderboard } from '../ui/endScreen.js';
 import { clearHL } from '../ui/helpers.js';
 import { saveSession, getLeaderboard, saveCurrentGame, clearCurrentGame, getPlayerName } from '../db/indexdb.js';
 
@@ -57,51 +57,57 @@ export async function endGame(solved) {
 
   try { await clearCurrentGame(); } catch (e) { /* ignore */ }
 
-  const playerName = getPlayerName();
-
-  try {
-    await saveSession({
-      tutorialCompleted: true,
-      caseSolved: solved,
-      queriesUsed: S.queryTokenUsed,
-      queryCount: S.queryCount,
-      peakTokens: S.peakToken,
-      summarizeUsed: S.usedSummarize,
-      accusedId: S.accusedId,
-      score,
-      difficulty: caseCfg?.difficulty || 'MEDIUM',
-      caseId: caseCfg?.id || 'medium',
-      playerName: playerName || null,
-    });
-  } catch (err) {
-    console.warn('Failed to save session:', err);
-  }
-
   hideTutPanel();
-  showEndScreen({
-    solved,
-    queryCount: S.queryCount,
-    queryTokenUsed: S.queryTokenUsed,
-    queryTokenLimit: S.queryTokenLimit,
-    peakToken: S.peakToken,
-    tokenLimit: S.tokenLimit,
-    usedSummarize: S.usedSummarize,
-    score,
-    rank,
-    accusedId: S.accusedId,
-    promptHistory: S.promptHistory,
-    difficulty: caseCfg?.difficulty || 'MEDIUM',
-    caseTitle: caseCfg?.title || 'THE CASE',
-    culpritReveal: caseCfg?.culpritReveal,
-    suspects: S.suspects,
-  });
 
-  try {
-    const entries = await getLeaderboard();
-    renderLeaderboard(entries);
-  } catch (err) {
-    console.warn('Failed to load leaderboard:', err);
-  }
+  showNameEntry({
+    solved, score, rank,
+    onContinue: async () => {
+      const playerName = getPlayerName();
+
+      try {
+        await saveSession({
+          tutorialCompleted: true,
+          caseSolved: solved,
+          queriesUsed: S.queryTokenUsed,
+          queryCount: S.queryCount,
+          peakTokens: S.peakToken,
+          summarizeUsed: S.usedSummarize,
+          accusedId: S.accusedId,
+          score,
+          difficulty: caseCfg?.difficulty || 'MEDIUM',
+          caseId: caseCfg?.id || 'medium',
+          playerName: playerName || null,
+        });
+      } catch (err) {
+        console.warn('Failed to save session:', err);
+      }
+
+      showEndScreen({
+        solved,
+        queryCount: S.queryCount,
+        queryTokenUsed: S.queryTokenUsed,
+        queryTokenLimit: S.queryTokenLimit,
+        peakToken: S.peakToken,
+        tokenLimit: S.tokenLimit,
+        usedSummarize: S.usedSummarize,
+        score,
+        rank,
+        accusedId: S.accusedId,
+        promptHistory: S.promptHistory,
+        difficulty: caseCfg?.difficulty || 'MEDIUM',
+        caseTitle: caseCfg?.title || 'THE CASE',
+        culpritReveal: caseCfg?.culpritReveal,
+        suspects: S.suspects,
+      });
+
+      try {
+        const entries = await getLeaderboard();
+        renderLeaderboard(entries);
+      } catch (err) {
+        console.warn('Failed to load leaderboard:', err);
+      }
+    },
+  });
 }
 
 export function initGame(savedState, caseId = 'medium') {
