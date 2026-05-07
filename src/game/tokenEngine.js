@@ -77,11 +77,12 @@ export function mergeFacts(id1, id2) {
   const f2 = S.memFacts.find(f => f.id === id2);
   if (!f1 || !f2) return null;
 
-  let mtext = MERGE_TABLE[`${id1}+${id2}`] ||
+  const caseTable = S.currentCase?.mergeTable || {};
+  let mtext = caseTable[`${id1}+${id2}`] || MERGE_TABLE[`${id1}+${id2}`] ||
     (f1.text.substring(0, 18) + '… & ' + f2.text.substring(0, 18) + '…').substring(0, 44);
 
   if (S.phase === 'game' && S.summarizeLossChance && Math.random() < S.summarizeLossChance) {
-    const keywords = [
+    const keywords = S.currentCase?.lossyKeywords || [
       'scarf', 'midnight', 'crash', 'guard', 'necklace', 'window', 'pawn', 'pawn shop', 'ashford',
     ];
     const hit = keywords.find(k => mtext.toLowerCase().includes(k));

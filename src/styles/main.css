@@ -1015,3 +1015,221 @@ button:disabled, button.locked { opacity:.5; cursor:not-allowed; box-shadow: non
 @media (min-width: 640px) {
   body.tut-active #screen-game { margin-left:274px; width:calc(100vw - 274px); }
 }
+
+/* ── level select screen ─────────────────────────────────── */
+#screen-level {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: #fdfaf3;
+  background-image: radial-gradient(#d7ccc8 1px, transparent 1px);
+  background-size: 20px 20px;
+  z-index: 300;
+  overflow-y: auto;
+  padding: 24px 16px;
+}
+#level-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  max-width: 900px;
+  width: 100%;
+  animation: fadeIn .5s ease;
+}
+#level-title {
+  font-size: 26px;
+  font-weight: bold;
+  letter-spacing: 4px;
+  color: #3e2723;
+  text-shadow: 2px 2px 0 #fff;
+}
+#level-sub {
+  font-size: 13px;
+  color: #5d4037;
+  letter-spacing: 1px;
+}
+#level-cards {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+}
+.level-card {
+  flex: 1 1 220px;
+  max-width: 280px;
+  background: #fff;
+  border: 2px solid #3e2723;
+  border-radius: 12px;
+  padding: 20px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 6px 6px 0 #3e2723;
+  transition: transform .1s, box-shadow .1s;
+}
+.level-card:hover { transform: translate(-2px,-2px); box-shadow: 8px 8px 0 #3e2723; }
+.lc-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 3px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 2px solid currentColor;
+  align-self: flex-start;
+}
+.level-easy   .lc-badge { color: #2e7d32; background: #e8f5e9; }
+.level-medium .lc-badge { color: #e65100; background: #fff3e0; }
+.level-hard   .lc-badge { color: #b71c1c; background: #ffebee; }
+.lc-title {
+  font-size: 13px;
+  font-weight: bold;
+  color: #3e2723;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  line-height: 1.3;
+}
+.lc-desc {
+  font-size: 12px;
+  color: #5d4037;
+  line-height: 1.5;
+  font-style: italic;
+}
+.lc-stats {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 11px;
+  color: #4e342e;
+  line-height: 1.9;
+  border-top: 1px dashed #bcaaa4;
+  padding-top: 8px;
+}
+.lc-btn {
+  margin-top: auto;
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  padding: 10px 16px;
+  border: 2px solid #3e2723;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform .1s, box-shadow .1s;
+  box-shadow: 3px 3px 0 #3e2723;
+}
+.lc-btn:hover { transform: translate(-1px,-1px); box-shadow: 4px 4px 0 #3e2723; }
+.lc-btn:active { transform: translate(1px,1px); box-shadow: 1px 1px 0 #3e2723; }
+.level-easy   .lc-btn { background: #c8e6c9; color: #1b5e20; }
+.level-medium .lc-btn { background: #ffecb3; color: #e65100; }
+.level-hard   .lc-btn { background: #ffcdd2; color: #b71c1c; }
+.lc-back {
+  background: transparent;
+  border: 2px solid #8d6e63;
+  color: #5d4037;
+  border-radius: 8px;
+  padding: 8px 20px;
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  cursor: pointer;
+}
+.lc-back:hover { background: #efebe9; }
+
+/* ── difficulty badge (in token bar) ─────────────────────── */
+.diff-badge {
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  border: 2px solid currentColor;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.diff-easy   { color: #2e7d32; background: #e8f5e9; }
+.diff-medium { color: #e65100; background: #fff3e0; }
+.diff-hard   { color: #b71c1c; background: #ffebee; }
+
+/* ── player name section (end screen) ────────────────────── */
+#player-name-section {
+  background: #fff;
+  border: 2px solid #3e2723;
+  border-radius: 10px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 4px 4px 0 #3e2723;
+  width: 100%;
+  max-width: 480px;
+}
+.pn-label {
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: #5d4037;
+  text-transform: uppercase;
+}
+#pn-input-row {
+  display: flex;
+  gap: 8px;
+}
+#pn-input {
+  flex: 1;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  padding: 7px 10px;
+  border: 2px solid #3e2723;
+  border-radius: 6px;
+  background: #fdfaf3;
+  color: #3e2723;
+  user-select: text;
+  -webkit-user-select: text;
+}
+#btn-pn-save {
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  padding: 7px 14px;
+  background: #c8e6c9;
+  border: 2px solid #3e2723;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 #3e2723;
+}
+#btn-pn-save:hover { transform: translate(-1px,-1px); box-shadow: 3px 3px 0 #3e2723; }
+#pn-saved {
+  font-size: 11px;
+  color: #2e7d32;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+/* ── leaderboard difficulty tags ─────────────────────────── */
+.lb-diff {
+  font-size: 9px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  padding: 1px 5px;
+  border-radius: 6px;
+  border: 1px solid currentColor;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+.lb-diff-easy   { color: #2e7d32; background: #e8f5e9; }
+.lb-diff-medium { color: #e65100; background: #fff3e0; }
+.lb-diff-hard   { color: #b71c1c; background: #ffebee; }
+
+/* ── end screen difficulty stat row ─────────────────────── */
+#s-difficulty { font-weight: bold; }
+
+/* ── level select mobile ────────────────────────────────── */
+@media (max-width: 639px) {
+  #level-cards { flex-direction: column; align-items: center; }
+  .level-card  { max-width: 340px; width: 100%; }
+  #level-title { font-size: 20px; letter-spacing: 3px; }
+}

@@ -30,10 +30,10 @@ if ('serviceWorker' in navigator) {
 async function showLanding() {
   S.phase = 'landing';
   document.getElementById('screen-landing').style.display = 'flex';
+  document.getElementById('screen-level').style.display   = 'none';
   document.getElementById('screen-game').style.display    = 'none';
   document.getElementById('screen-end').style.display     = 'none';
 
-  // Show continue button only if a saved game exists
   try {
     const saved = await loadCurrentGame();
     const btn   = document.getElementById('btn-continue');
@@ -44,7 +44,15 @@ async function showLanding() {
   }
 }
 
-// ── Tab switching (Case File / Suspects) ─────────────────
+// ── Level select screen ───────────────────────────────────
+function showLevelSelect() {
+  document.getElementById('screen-landing').style.display = 'none';
+  document.getElementById('screen-level').style.display   = 'flex';
+  document.getElementById('screen-game').style.display    = 'none';
+  document.getElementById('screen-end').style.display     = 'none';
+}
+
+// ── Tab switching ─────────────────────────────────────────
 function switchTab(tab) {
   document.getElementById('case-file').style.display     = tab === 'evidence' ? 'flex' : 'none';
   document.getElementById('suspect-panel').style.display = tab === 'suspects' ? 'flex' : 'none';
@@ -84,9 +92,11 @@ function enterSumMode() {
   document.getElementById('btn-confirm-merge').style.display = 'none';
   document.getElementById('btn-cancel-sum').style.display    = 'inline-block';
 
-  const memIds   = S.memFacts.map(f => f.id);
+  const caseTable = S.currentCase?.mergeTable || {};
+  const fullTable = { ...MERGE_TABLE, ...caseTable };
+  const memIds    = S.memFacts.map(f => f.id);
   const hasCompat = S.memFacts.some(f =>
-    memIds.some(id => id !== f.id && (MERGE_TABLE[`${f.id}+${id}`] || MERGE_TABLE[`${id}+${f.id}`]))
+    memIds.some(id => id !== f.id && (fullTable[`${f.id}+${id}`] || fullTable[`${id}+${f.id}`]))
   );
   addChat('sys', hasCompat
     ? 'Click two facts to merge them. Green-ringed facts have a clean merge ready.'
@@ -124,10 +134,12 @@ function toggleBubbleSel(fid) {
     const f1 = S.memFacts.find(f => f.id === id1);
     const f2 = S.memFacts.find(f => f.id === id2);
     if (f1 && f2) {
-      const mergedText = MERGE_TABLE[`${id1}+${id2}`] || MERGE_TABLE[`${id2}+${id1}`];
-      const estNew  = mergedText ? Math.max(1, Math.ceil(mergedText.length / 4)) : 11;
+      const caseTable  = S.currentCase?.mergeTable || {};
+      const fullTable  = { ...MERGE_TABLE, ...caseTable };
+      const mergedText = fullTable[`${id1}+${id2}`] || fullTable[`${id2}+${id1}`];
+      const estNew   = mergedText ? Math.max(1, Math.ceil(mergedText.length / 4)) : 11;
       const estSaved = Math.max(0, f1.cost + f2.cost - estNew);
-      const risk     = S.phase === 'game' ? ' (25% risk)' : '';
+      const risk     = S.phase === 'game' ? ` (${Math.round((S.summarizeLossChance || 0.25) * 100)}% risk)` : '';
       cfm.textContent = `Merge → save ~${estSaved}t${risk}`;
     } else {
       cfm.textContent = 'Confirm Merge';
@@ -151,7 +163,9 @@ function doConfirmMerge() {
   renderCloud(); renderCF(); updateBar();
 
   const freeToks    = S.tokenLimit - S.tokenUsage - S.systemOverhead;
-  const expectedTxt = MERGE_TABLE[`${id1}+${id2}`] || MERGE_TABLE[`${id2}+${id1}`];
+  const caseTable   = S.currentCase?.mergeTable || {};
+  const fullTable   = { ...MERGE_TABLE, ...caseTable };
+  const expectedTxt = fullTable[`${id1}+${id2}`] || fullTable[`${id2}+${id1}`];
   const wasLossy    = expectedTxt && result.mergedText !== expectedTxt;
   let msg = `Merged → "${result.mergedText}" — freed ${result.saved}t. ${freeToks}t now available.`;
   if (wasLossy)         msg += ' A detail may have blurred.';
@@ -187,11 +201,9 @@ async function submitQuery(txt) {
   addChat('player', txt);
   clearInput();
 
-  // Lock input while witness is responding
   S.locked.add('btn-submit');
   document.getElementById('chat-input').disabled = true;
 
-  // Prompt tokens temporarily consume memory budget during the response.
   S.tokenUsage += tokCost;
   const totalNow = S.tokenUsage + (S.systemOverhead || 0);
   if (totalNow > S.peakToken) S.peakToken = totalNow;
@@ -210,7 +222,6 @@ async function submitQuery(txt) {
   const pending = addChatPending();
   const resp = await aiRespondAsync(txt);
 
-  // Track prompt history for game phase
   if (S.phase === 'game') {
     const analysis = analyzePrompt(txt, S.promptHistory);
     S.promptHistory.push({
@@ -226,7 +237,6 @@ async function submitQuery(txt) {
   S.tokenUsage = Math.max(0, S.tokenUsage - tokCost);
   updateBar();
 
-  // Unlock input
   S.locked.delete('btn-submit');
   document.getElementById('chat-input').disabled = false;
   document.getElementById('chat-input').focus();
@@ -238,9 +248,9 @@ async function submitQuery(txt) {
 
 function hasWinEvidence() {
   const mtext = S.memFacts.map(f => f.text.toLowerCase()).join(' ');
-  const hasSc = mtext.includes('scarf') || mtext.includes('crane') || mtext.includes('pawn');
-  const hasMi = mtext.includes('midnight') || mtext.includes('11 pm') || mtext.includes('jazz');
-  return hasSc && hasMi;
+  const groups = S.currentCase?.winGroups;
+  if (!groups) return false;
+  return groups.every(g => g.keywords.some(kw => mtext.includes(kw)));
 }
 
 function canAddAnyFact() {
@@ -256,10 +266,10 @@ function checkDeadEnd() {
     return;
   }
   if (!S.deadEndWarned) {
-    const remaining = S.queryTokenLimit - S.queryTokenUsed;
-    const minPrompt = promptTokens('who is the thief');
+    const remaining   = S.queryTokenLimit - S.queryTokenUsed;
+    const minPrompt   = promptTokens('who is the thief');
     const nearNoQueries = remaining > 0 && remaining <= minPrompt;
-    const nearNoMemory = !canAddAnyFact() && !hasWinEvidence();
+    const nearNoMemory  = !canAddAnyFact() && !hasWinEvidence();
     if (nearNoQueries || nearNoMemory) {
       addChat('sys', 'Warning: you are one step from a dead end. Consider accusing or summarizing now.');
       S.deadEndWarned = true;
@@ -309,27 +319,27 @@ function processAccuse() {
   const res = document.getElementById('accuse-result');
   if (!id) { res.className = 'fail'; res.textContent = '◦ Select a suspect first.'; return; }
 
-  const mtext = S.memFacts.map(f => f.text.toLowerCase()).join(' ');
-  const hasSc = mtext.includes('scarf') || mtext.includes('crane') || mtext.includes('pawn');
-  const hasMi = mtext.includes('midnight') || mtext.includes('11 pm') || mtext.includes('jazz');
-
   S.accusedId = id;
+  const mtext   = S.memFacts.map(f => f.text.toLowerCase()).join(' ');
+  const winOk   = hasWinEvidence();
+  const guiltyId = S.currentCase?.guiltyId;
 
-  if (id === 'victor') {
-    if (hasSc && hasMi) {
+  if (id === guiltyId) {
+    if (winOk) {
+      const culprit   = S.currentCase?.culpritReveal;
       res.className   = 'ok';
-      res.textContent = '✓ CORRECT! Victor Crane is apprehended!';
+      res.textContent = `✓ CORRECT! ${culprit?.name ?? 'The suspect'} is apprehended!`;
       S.caseSolved    = true;
       setTimeout(() => { closeAccuse(); endGame(true); }, 1400);
     } else {
-      const missing = [];
-      if (!hasSc) missing.push('the red scarf evidence');
-      if (!hasMi) missing.push('the midnight timeline');
+      const missing = (S.currentCase?.winGroups || [])
+        .filter(g => !g.keywords.some(kw => mtext.includes(kw)))
+        .map(g => g.label);
       res.className   = 'fail';
       res.textContent = `✗ The charge won't stick. Missing from memory: ${missing.join(' and ')}.`;
     }
   } else {
-    if (!hasSc || !hasMi) {
+    if (!winOk) {
       res.className   = 'fail';
       res.textContent = '✗ Not enough evidence yet. Load the key clues into memory first.';
     } else {
@@ -365,31 +375,37 @@ function setupEvents() {
   renderSuspects(handleEliminate);
 
   // Landing buttons
-  document.getElementById('btn-new-game').addEventListener('click', () => initGame());
+  document.getElementById('btn-new-game').addEventListener('click', showLevelSelect);
   document.getElementById('btn-continue').addEventListener('click', async () => {
     try {
       const saved = await loadCurrentGame();
-      if (saved) initGame(saved);
-      else initGame();
-    } catch { initGame(); }
+      if (saved) initGame(saved, saved.currentCaseId || 'medium');
+      else showLevelSelect();
+    } catch { showLevelSelect(); }
   });
   document.getElementById('btn-go-tutorial').addEventListener('click', () => initTutorial());
+
+  // Level select buttons
+  document.getElementById('btn-level-back').addEventListener('click', () => showLanding());
+  document.getElementById('btn-level-easy').addEventListener('click', () => initGame(null, 'easy'));
+  document.getElementById('btn-level-medium').addEventListener('click', () => initGame(null, 'medium'));
+  document.getElementById('btn-level-hard').addEventListener('click', () => initGame(null, 'hard'));
 
   // Tutorial navigation
   document.getElementById('btn-tut-next').addEventListener('click', advanceTut);
   document.getElementById('btn-skip-tut').addEventListener('click', async () => {
     await setTutorialComplete().catch(() => {});
-    initGame();
+    showLevelSelect();
   });
   document.getElementById('btn-start-game').addEventListener('click', async () => {
     await setTutorialComplete().catch(() => {});
-    initGame();
+    showLevelSelect();
   });
 
   // Replay / back to landing
   document.getElementById('btn-replay').addEventListener('click', () => showLanding());
 
-  // Home button — open confirmation modal
+  // Home button
   document.getElementById('btn-home').addEventListener('click', () => {
     document.getElementById('home-modal').classList.add('open');
   });
@@ -405,7 +421,6 @@ function setupEvents() {
     try { await clearCurrentGame(); } catch { /* ignore */ }
     showLanding();
   });
-  // Close on backdrop click
   document.getElementById('home-modal').addEventListener('click', e => {
     if (e.target === document.getElementById('home-modal')) {
       document.getElementById('home-modal').classList.remove('open');

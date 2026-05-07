@@ -1,14 +1,15 @@
 import { esc } from './helpers.js';
-import { SUSPECTS } from '../game/suspects.js';
+import { getPlayerName, setPlayerName } from '../db/indexdb.js';
 
 export function showEndScreen({ solved, queryCount, queryTokenUsed, queryTokenLimit, peakToken, tokenLimit,
-                                usedSummarize, score, rank, accusedId, promptHistory }) {
-  document.getElementById('screen-game').style.display  = 'none';
+                                usedSummarize, score, rank, accusedId, promptHistory,
+                                difficulty, caseTitle, culpritReveal, suspects }) {
+  document.getElementById('screen-game').style.display    = 'none';
   document.getElementById('screen-landing').style.display = 'none';
   const es = document.getElementById('screen-end');
   es.style.display = 'flex';
 
-  // ── Outcome header ───────────────────────────────────
+  // ── Outcome header ────────────────────────────────────
   const tl = document.getElementById('end-title');
   tl.textContent = solved ? '✓ CASE CLOSED' : '✗ COLD CASE';
   tl.className   = solved ? 'solved' : 'unsolved';
@@ -20,44 +21,80 @@ export function showEndScreen({ solved, queryCount, queryTokenUsed, queryTokenLi
   document.getElementById('s-peak').textContent    = `${peakToken} / ${tokenLimit} tokens`;
   document.getElementById('s-sum').textContent     = usedSummarize ? 'YES (+15 pts)' : 'NO';
 
+  const diffEl = document.getElementById('s-difficulty');
+  if (diffEl) diffEl.textContent = difficulty || '—';
+
   const pct = Math.round((1 - peakToken / tokenLimit) * 100);
   document.getElementById('end-share').textContent =
     solved
       ? `You solved the case using ${queryTokenUsed} interrogation tokens and ${100 - pct}% of your memory budget.`
       : `The case went cold after ${queryTokenUsed} interrogation tokens. Review the evidence next time.`;
 
-  // ── Culprit reveal ───────────────────────────────────
-  const guilty  = SUSPECTS.find(s => s.guilty);
-  const accused = accusedId ? SUSPECTS.find(s => s.id === accusedId) : null;
+  // ── Culprit reveal ────────────────────────────────────
   const crEl = document.getElementById('end-culprit');
-  if (crEl && guilty) {
+  if (crEl && culpritReveal) {
+    const accused = accusedId ? (suspects || []).find(s => s.id === accusedId) : null;
+    const guilty  = (suspects || []).find(s => s.guilty);
     if (solved) {
       crEl.innerHTML = `
         <div class="cr-label">PERPETRATOR IDENTIFIED</div>
-        <div class="cr-name">${esc(guilty.name)}</div>
-        <div class="cr-role">${esc(guilty.role)}</div>
-        <div class="cr-detail">Victor Crane's alibi fell apart: the Blue Note Jazz Club closes at 11 PM — he had no alibi past midnight. The red scarf, snagged fabric near his shop, and the midnight timeline sealed his guilt.</div>
+        <div class="cr-name">${esc(culpritReveal.name)}</div>
+        <div class="cr-role">${esc(culpritReveal.role)}</div>
+        <div class="cr-detail">${esc(culpritReveal.detail)}</div>
       `;
       crEl.className = 'culprit-reveal solved';
     } else {
-      const wrongName = accused ? accused.name : 'No accusation made';
       crEl.innerHTML = `
         <div class="cr-label">THE REAL PERPETRATOR</div>
-        <div class="cr-name">${esc(guilty.name)}</div>
-        <div class="cr-role">${esc(guilty.role)}</div>
+        <div class="cr-name">${esc(culpritReveal.name)}</div>
+        <div class="cr-role">${esc(culpritReveal.role)}</div>
         <div class="cr-detail">
-          ${accused && accused.id !== guilty.id
-            ? `You accused ${esc(wrongName)} — an innocent person. `
-            : ''}
-          Crane's alibi was a lie: the jazz club closes at 11 PM. The red scarf and the fabric near his pawn shop were the key clues.
+          ${accused && guilty && accused.id !== guilty.id
+            ? `You accused ${esc(accused.name)} — an innocent person. ` : ''}
+          ${esc(culpritReveal.detail)}
         </div>
       `;
       crEl.className = 'culprit-reveal unsolved';
     }
   }
 
-  // ── Prompt history ───────────────────────────────────
+  // ── Player name section ───────────────────────────────
+  _renderNameSection();
+
+  // ── Prompt history ────────────────────────────────────
   renderPromptHistory(promptHistory || []);
+}
+
+function _renderNameSection() {
+  const wrap = document.getElementById('player-name-section');
+  if (!wrap) return;
+  const saved = getPlayerName();
+  wrap.innerHTML = `
+    <div class="pn-label">Your detective name for the leaderboard:</div>
+    <div id="pn-input-row">
+      <input id="pn-input" type="text" maxlength="24" placeholder="Anonymous Detective"
+             value="${esc(saved || '')}" autocomplete="off" spellcheck="false">
+      <button id="btn-pn-save">Save</button>
+    </div>
+    <div id="pn-saved" style="display:none">✓ Saved</div>
+  `;
+  document.getElementById('btn-pn-save').addEventListener('click', _saveName);
+  document.getElementById('pn-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') _saveName();
+  });
+}
+
+function _saveName() {
+  const input = document.getElementById('pn-input');
+  if (!input) return;
+  const name = setPlayerName(input.value);
+  input.value = name || '';
+  const saved = document.getElementById('pn-saved');
+  if (saved) {
+    saved.textContent = name ? `✓ Saved as: ${name}` : '✓ Cleared';
+    saved.style.display = 'block';
+    setTimeout(() => { if (saved) saved.style.display = 'none'; }, 2200);
+  }
 }
 
 export function renderPromptHistory(history) {
@@ -78,10 +115,8 @@ export function renderPromptHistory(history) {
   history.forEach((entry, i) => {
     const row = document.createElement('div');
     row.className = 'ph-row';
-
     const eff = entry.analysis;
     const effClass = eff ? (eff.efficient ? 'eff-good' : 'eff-warn') : '';
-
     row.innerHTML = `
       <div class="ph-query ${effClass}">
         <span class="ph-num">#${i + 1}</span>
@@ -117,10 +152,16 @@ export function renderLeaderboard(entries) {
     return;
   }
   entries.slice(0, 10).forEach((e, i) => {
-    const tok = e.sessionToken ? e.sessionToken.substring(0, 8) : 'anon';
+    const displayName = e.playerName
+      ? esc(e.playerName)
+      : (e.sessionToken ? e.sessionToken.substring(0, 8) + '…' : 'anon');
+    const diff = (e.difficulty || '').toLowerCase();
+    const diffTag = e.difficulty
+      ? ` <span class="lb-diff lb-diff-${diff}">${esc(e.difficulty)}</span>`
+      : '';
     const row = document.createElement('div');
     row.className = 'sr';
-    row.innerHTML = `<span class="sl">#${i + 1} ${tok}…</span><span class="sv">${e.score} pts (${e.queriesUsed}t)</span>`;
+    row.innerHTML = `<span class="sl">#${i + 1} ${displayName}${diffTag}</span><span class="sv">${e.score} pts (${e.queriesUsed}t)</span>`;
     list.appendChild(row);
   });
 }

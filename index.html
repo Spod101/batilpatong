@@ -31,6 +31,57 @@
     </div>
   </div>
 
+  <!-- ══ LEVEL SELECT SCREEN ════════════════════════════════ -->
+  <div id="screen-level" style="display:none">
+    <div id="level-inner">
+      <div id="level-title">SELECT DIFFICULTY</div>
+      <p id="level-sub">Each case has different suspects, clues, and memory limits.</p>
+      <div id="level-cards">
+
+        <div class="level-card level-easy">
+          <div class="lc-badge">EASY</div>
+          <div class="lc-title">THE MISSING HEIRLOOM</div>
+          <div class="lc-desc">A gold watch vanishes from a locked boutique.</div>
+          <ul class="lc-stats">
+            <li>3 suspects</li>
+            <li>6 clues</li>
+            <li>Memory: 190t &nbsp;·&nbsp; Interrogation: 120t</li>
+            <li>Slow memory decay</li>
+          </ul>
+          <button id="btn-level-easy" class="lc-btn">▶ Play Easy</button>
+        </div>
+
+        <div class="level-card level-medium">
+          <div class="lc-badge">MEDIUM</div>
+          <div class="lc-title">THE BLUE DIAMOND NECKLACE</div>
+          <div class="lc-desc">A $2M necklace stolen from a locked gallery at midnight.</div>
+          <ul class="lc-stats">
+            <li>5 suspects</li>
+            <li>9 clues</li>
+            <li>Memory: 170t &nbsp;·&nbsp; Interrogation: 90t</li>
+            <li>Moderate decay &amp; summarize risk</li>
+          </ul>
+          <button id="btn-level-medium" class="lc-btn">▶ Play Medium</button>
+        </div>
+
+        <div class="level-card level-hard">
+          <div class="lc-badge">HARD</div>
+          <div class="lc-title">THE VANISHING MAESTRO</div>
+          <div class="lc-desc">A celebrated conductor is poisoned in his locked estate.</div>
+          <ul class="lc-stats">
+            <li>7 suspects</li>
+            <li>11 clues</li>
+            <li>Memory: 150t &nbsp;·&nbsp; Interrogation: 70t</li>
+            <li>Fast decay every query, 35% summarize loss</li>
+          </ul>
+          <button id="btn-level-hard" class="lc-btn">▶ Play Hard</button>
+        </div>
+
+      </div>
+      <button id="btn-level-back" class="lc-back">← Back</button>
+    </div>
+  </div>
+
   <!-- ══ TUTORIAL PANEL ═══════════════════════════════════════ -->
   <div id="tut-panel" class="hidden">
     <div id="tut-badge">Training — Step <span id="tut-step-num">0</span></div>
@@ -41,7 +92,7 @@
     <button id="btn-tut-next">Next →</button>
     <div id="tut-start-wrap">
       <small>Tutorial complete. Ready for the real case?</small>
-      <button id="btn-start-game">▶ Start Real Case</button>
+      <button id="btn-start-game">▶ Choose Difficulty</button>
     </div>
     <button id="btn-skip-tut">Skip Tutorial →</button>
   </div>
@@ -52,6 +103,7 @@
     <!-- Token Bar -->
     <div id="token-bar-wrap">
       <button id="btn-home" title="Back to menu">←</button>
+      <span id="difficulty-badge" style="display:none" class="diff-badge">MEDIUM</span>
       <div id="tbTitle">Memory</div>
       <div id="token-bar-track"><div id="token-bar-fill"></div></div>
       <div id="tbLabel">0 / 140</div>
@@ -144,9 +196,13 @@
     <!-- Culprit reveal -->
     <div id="end-culprit"></div>
 
+    <!-- Player name for leaderboard -->
+    <div id="player-name-section"></div>
+
     <!-- Stats -->
     <div id="end-stats">
       <div class="sr"><span class="sl">Case Solved</span><span class="sv" id="s-solved">—</span></div>
+      <div class="sr"><span class="sl">Difficulty</span><span class="sv" id="s-difficulty">—</span></div>
       <div class="sr"><span class="sl">Interrogation Tokens</span><span class="sv" id="s-queries">—</span></div>
       <div class="sr"><span class="sl">Peak Memory</span><span class="sv" id="s-peak">—</span></div>
       <div class="sr"><span class="sl">Summarize Used</span><span class="sv" id="s-sum">—</span></div>

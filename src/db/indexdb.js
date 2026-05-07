@@ -1,7 +1,7 @@
 import { supabase } from './supabase.js';
 
 const DB_NAME        = 'fading-testimony';
-const DB_VERSION     = 2;
+const DB_VERSION     = 3;
 const STORE_SESSIONS = 'game_sessions';
 const STORE_PLAYER   = 'player';
 
@@ -33,10 +33,26 @@ function getSessionToken() {
   return token;
 }
 
+// ── Player name (localStorage for synchronous access) ──────
+export function getPlayerName() {
+  return localStorage.getItem('ft_player_name') || null;
+}
+
+export function setPlayerName(name) {
+  const trimmed = (name || '').trim().substring(0, 24);
+  if (trimmed) {
+    localStorage.setItem('ft_player_name', trimmed);
+  } else {
+    localStorage.removeItem('ft_player_name');
+  }
+  return trimmed;
+}
+
 export async function saveSession(data) {
   const record = {
     ...data,
     sessionToken: getSessionToken(),
+    playerName: data.playerName || getPlayerName() || null,
     createdAt: new Date().toISOString(),
   };
 
@@ -50,17 +66,20 @@ export async function saveSession(data) {
     req.onerror   = e => reject(e.target.error);
   });
 
-  // remote save (fire-and-forget — don't block game flow on failure)
+  // remote save (fire-and-forget)
   if (supabase) {
     supabase.from('game_sessions').insert({
       session_token:  record.sessionToken,
-      case_solved:    record.caseSolved    ?? false,
-      queries_used:   record.queriesUsed   ?? 0,
-      query_count:    record.queryCount    ?? 0,
-      peak_tokens:    record.peakTokens    ?? 0,
+      player_name:    record.playerName   ?? null,
+      case_solved:    record.caseSolved   ?? false,
+      queries_used:   record.queriesUsed  ?? 0,
+      query_count:    record.queryCount   ?? 0,
+      peak_tokens:    record.peakTokens   ?? 0,
       summarize_used: record.summarizeUsed ?? false,
-      accused_id:     record.accusedId     ?? null,
-      score:          record.score         ?? 0,
+      accused_id:     record.accusedId    ?? null,
+      score:          record.score        ?? 0,
+      difficulty:     record.difficulty   ?? 'MEDIUM',
+      case_id:        record.caseId       ?? 'medium',
       created_at:     record.createdAt,
     }).then(({ error }) => {
       if (error) console.warn('Supabase session save failed:', error.message);
@@ -69,11 +88,10 @@ export async function saveSession(data) {
 }
 
 export async function getLeaderboard() {
-  // prefer global leaderboard from Supabase
   if (supabase) {
     const { data, error } = await supabase
       .from('game_sessions')
-      .select('session_token, score, query_count, queries_used, peak_tokens, summarize_used, accused_id, created_at')
+      .select('session_token, player_name, score, query_count, queries_used, peak_tokens, summarize_used, accused_id, difficulty, case_id, created_at')
       .eq('case_solved', true)
       .order('score', { ascending: false })
       .limit(100);
@@ -81,19 +99,21 @@ export async function getLeaderboard() {
     if (!error && data?.length) {
       return data.map(r => ({
         sessionToken:  r.session_token,
+        playerName:    r.player_name,
         score:         r.score,
         queryCount:    r.query_count,
         queriesUsed:   r.queries_used,
         peakTokens:    r.peak_tokens,
         summarizeUsed: r.summarize_used,
         accusedId:     r.accused_id,
+        difficulty:    r.difficulty,
+        caseId:        r.case_id,
         createdAt:     r.created_at,
         caseSolved:    true,
       }));
     }
   }
 
-  // fallback to local IndexedDB
   const db = await openDB();
   return new Promise((resolve, reject) => {
     const tx    = db.transaction(STORE_SESSIONS, 'readonly');
@@ -132,7 +152,6 @@ export async function setTutorialComplete() {
   });
 }
 
-// ── In-progress game save/restore ────────────────────────
 export async function saveCurrentGame(snapshot) {
   const db = await openDB();
   return new Promise((resolve, reject) => {

@@ -7,33 +7,13 @@ export const TUT_CFG = {
   queryTokenLimit: 999,
   eliminationBonus: 0,
   facts: [
-    { id: 'tut_glove',   text: 'The thief wore a glove on their left hand.' },
+    { id: 'tut_glove',    text: 'The thief wore a glove on their left hand.' },
     { id: 'tut_midnight', text: 'The theft happened at midnight.' },
-    { id: 'tut_window',  text: 'A window was left open.' },
+    { id: 'tut_window',   text: 'A window was left open.' },
   ],
 };
 
-export const GAME_CFG = {
-  tokenLimit: 170,
-  factCost: 40,
-  systemOverhead: 30,
-  decayEveryQueries: 2,
-  summarizeLossChance: 0.25,
-  queryTokenLimit: 90,
-  eliminationBonus: 20,
-  facts: [
-    { id: 'scarf',    text: 'A witness saw the thief wearing a red scarf.',            group: 'identity' },
-    { id: 'pawnshop', text: 'Red fabric snagged near Crane\'s pawn shop on Ashford.',  group: 'identity' },
-    { id: 'guard',    text: 'Guard Petrov was asleep at his post.',                    group: 'scene'    },
-    { id: 'crash',    text: 'A crash heard at 11:58 PM before the alarm.',             group: 'scene'    },
-    { id: 'necklace', text: 'Blue Diamond Necklace ($2M) taken from locked display.',  group: 'scene'    },
-    { id: 'window',   text: 'East window found unlocked from the inside.',             group: 'scene'    },
-    { id: 'midnight', text: 'Theft at midnight — jazz club closed at 11 PM.',          group: 'timeline' },
-    { id: 'valet',    text: 'A valet saw a blue sedan idling outside near closing.',   group: 'timeline' },
-    { id: 'lights',   text: 'Gallery lights flickered shortly before the alarm.',      group: 'timeline' },
-  ],
-};
-
+// Tutorial-only merge table. Case-specific merge tables live in cases.js.
 export const MERGE_TABLE = {
   'tut_glove+tut_midnight':  'Gloved hand at midnight',
   'tut_midnight+tut_glove':  'Gloved hand at midnight',
@@ -41,26 +21,6 @@ export const MERGE_TABLE = {
   'tut_window+tut_midnight': 'Midnight break-in via window',
   'tut_glove+tut_window':    'Gloved entry through window',
   'tut_window+tut_glove':    'Gloved entry through window',
-  'scarf+midnight':     'Red scarf thief at midnight',
-  'midnight+scarf':     'Red scarf thief at midnight',
-  'scarf+pawnshop':     'Red scarf linked to Crane\'s shop',
-  'pawnshop+scarf':     'Red scarf linked to Crane\'s shop',
-  'scarf+guard':        'Scarf figure slipped past sleeping guard',
-  'guard+scarf':        'Scarf figure slipped past sleeping guard',
-  'midnight+guard':     'Guard asleep at midnight',
-  'guard+midnight':     'Guard asleep at midnight',
-  'midnight+pawnshop':  'Crane\'s shop, midnight timeline',
-  'pawnshop+midnight':  'Crane\'s shop, midnight timeline',
-  'crash+midnight':     'Crash at 11:58 PM before theft',
-  'midnight+crash':     'Crash at 11:58 PM before theft',
-  'necklace+crash':     'Crash preceded necklace theft',
-  'crash+necklace':     'Crash preceded necklace theft',
-  'window+guard':       'Unlocked window, sleeping guard',
-  'guard+window':       'Unlocked window, sleeping guard',
-  'scarf+necklace':     'Red scarf thief took the necklace',
-  'necklace+scarf':     'Red scarf thief took the necklace',
-  'pawnshop+necklace':  'Necklace linked to Crane\'s shop',
-  'necklace+pawnshop':  'Necklace linked to Crane\'s shop',
 };
 
 // Central mutable game state — all modules share this single object
@@ -89,13 +49,14 @@ export const S = {
   caseSolved: false,
   locked: new Set(),
   draggingId: null,
-  // New fields
-  suspects: [],            // copies of SUSPECTS for this session
+  suspects: [],
   eliminatedIds: new Set(),
-  promptHistory: [],       // [{text, tokensUsed, memSnapshot, response}]
+  promptHistory: [],
   accusedId: null,
   selectedAccuseId: null,
   deadEndWarned: false,
   hint70Shown: false,
   hint90Shown: false,
+  currentCase: null,       // active case config object from cases.js
+  currentCaseId: null,     // 'easy' | 'medium' | 'hard'
 };
