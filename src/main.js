@@ -503,6 +503,15 @@ function setupEvents() {
 // ── Boot ─────────────────────────────────────────────────
 async function boot() {
   setupEvents();
+
+  try {
+    const saved = await loadCurrentGame();
+    if (saved) {
+      initGame(saved, saved.currentCaseId || 'medium');
+      return;
+    }
+  } catch { /* fall through to landing */ }
+
   showLanding();
 }
 
