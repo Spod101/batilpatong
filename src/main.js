@@ -387,7 +387,13 @@ function setupEvents() {
       else showLevelSelect();
     } catch { showLevelSelect(); }
   });
-  document.getElementById('btn-go-tutorial').addEventListener('click', () => initTutorial());
+  document.getElementById('btn-go-tutorial').addEventListener('click', () => {
+    renderOnboarding(null, {
+      type: 'tutorial',
+      onStart: () => initTutorial(),
+      onBack: () => showLanding()
+    });
+  });
 
   // Level select buttons
   document.getElementById('btn-level-back').addEventListener('click', () => showLanding());
