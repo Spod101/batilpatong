@@ -13,6 +13,7 @@ export function renderOnboarding(data, options) {
   screen.scrollTop = 0;
   flap.classList.remove('open');
   btn.classList.remove('show');
+  btnBack.classList.remove('show');
   folder.className = ''; 
 
   // Reset folder animation
@@ -34,13 +35,14 @@ export function renderOnboarding(data, options) {
     flap.classList.add('open');
     docs.forEach(d => d.classList.add('show'));
     btn.classList.add('show');
+    btnBack.classList.add('show');
   }, 450);
 
   // Handle Close (Start)
   btn.onclick = () => {
     flap.classList.remove('open');
     btn.classList.remove('show');
-    docs.forEach(d => d.classList.remove('show'));
+    btnBack.classList.remove('show');
     setTimeout(() => {
       screen.style.display = 'none';
       options.onStart();
@@ -51,7 +53,7 @@ export function renderOnboarding(data, options) {
   btnBack.onclick = () => {
     flap.classList.remove('open');
     btn.classList.remove('show');
-    docs.forEach(d => d.classList.remove('show'));
+    btnBack.classList.remove('show');
     setTimeout(() => {
       screen.style.display = 'none';
       options.onBack();

@@ -1139,6 +1139,79 @@ button:disabled, button.locked { opacity:.5; cursor:not-allowed; box-shadow: non
 }
 .lc-back:hover { background: #efebe9; }
 
+@media (max-width: 639px) {
+  #screen-level {
+    align-items: flex-start;
+    justify-content: flex-start;
+    overflow-x: hidden;
+    padding: 18px 14px 28px;
+  }
+  #level-inner {
+    align-items: stretch;
+    gap: 14px;
+    max-width: none;
+    width: 100%;
+    margin: 0 auto;
+  }
+  #level-title {
+    font-size: 20px;
+    line-height: 1.2;
+    text-align: center;
+    letter-spacing: 2px;
+  }
+  #level-sub {
+    font-size: 12px;
+    line-height: 1.4;
+    text-align: center;
+  }
+  #level-cards {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 16px;
+  }
+  .level-card {
+    flex: none;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    padding: 18px 16px;
+    border-radius: 10px;
+    box-shadow: 5px 5px 0 #3e2723;
+  }
+  .level-card:hover {
+    transform: none;
+    box-shadow: 5px 5px 0 #3e2723;
+  }
+  .lc-title {
+    font-size: 12px;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+  .lc-desc {
+    font-size: 12px;
+    line-height: 1.45;
+  }
+  .lc-stats {
+    font-size: 11px;
+    line-height: 1.8;
+  }
+  .lc-stats li {
+    overflow-wrap: anywhere;
+  }
+  .lc-btn {
+    width: 100%;
+    min-height: 46px;
+    font-size: 12px;
+    padding: 11px 14px;
+  }
+  .lc-back {
+    align-self: center;
+    min-height: 42px;
+    padding: 8px 18px;
+  }
+}
+
 /* ── difficulty badge (in token bar) ─────────────────────── */
 .diff-badge {
   font-size: 10px;
@@ -1283,7 +1356,11 @@ button:disabled, button.locked { opacity:.5; cursor:not-allowed; box-shadow: non
   box-shadow: 2px 2px 0px #3e2723;
   color: #5d4037;
   font-weight: 900;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.1s, box-shadow 0.1s, background 0.1s;
 }
+#btn-onboarding-back.show { opacity: 1; pointer-events: auto; }
 #btn-onboarding-back:hover { background: #fdfaf3; transform: translate(-1px, -1px); box-shadow: 3px 3px 0px #3e2723; }
 
 /* Flap / Cover */
