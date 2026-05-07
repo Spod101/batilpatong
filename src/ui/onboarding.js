@@ -1,4 +1,6 @@
 
+import { esc } from './helpers.js';
+
 export function renderOnboarding(data, options) {
   const screen = document.getElementById('screen-onboarding');
   const inner = document.getElementById('onboarding-inner');
@@ -90,7 +92,9 @@ function renderCaseContent({ caseData, folder, docsContainer, btn, btnBack, flap
       <div class="dossier-suspect-list">
         ${caseData.suspects.map(s => `
           <div class="dossier-suspect-card">
-            <div class="dsc-photo">👤</div>
+            <div class="dsc-photo">
+              <img src="${esc(s.portrait)}" alt="${esc(s.name)}" onerror="this.parentElement.innerHTML='👤'">
+            </div>
             <div class="dsc-info">
               <div class="dsc-top">
                 <div class="dsc-name">${s.name}</div>
