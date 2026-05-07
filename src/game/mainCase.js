@@ -205,7 +205,9 @@ export function initGame(savedState, caseId = 'medium') {
 
   const acb = document.getElementById('btn-accuse');
   acb.style.display = 'inline-block';
-  acb.disabled = false;
+  acb.disabled = true;
+  acb.textContent = 'Accuse Locked';
+  acb.title = 'Load key evidence into witness memory before accusing';
   document.getElementById('qCounter').style.display = 'block';
   document.getElementById('chat-log').innerHTML = '';
 

@@ -165,6 +165,7 @@ function doConfirmMerge() {
 
   exitSumMode();
   renderCloud(); renderCF(); updateBar();
+  updateAccuseAvailability();
 
   const freeToks    = S.tokenLimit - S.tokenUsage - S.systemOverhead;
   const caseTable   = S.currentCase?.mergeTable || {};
@@ -178,6 +179,7 @@ function doConfirmMerge() {
 
   if (S.phase === 'tutorial') tutMergeDone(id1, id2);
   if (S.phase === 'game') persistGameState();
+  updateAccuseAvailability();
 }
 
 // ── Query submission ─────────────────────────────────────
@@ -201,6 +203,7 @@ async function submitQuery(txt) {
   } else {
     renderCloud(); renderCF(); updateBar();
   }
+  updateAccuseAvailability();
 
   addChat('player', txt);
   clearInput();
@@ -247,6 +250,7 @@ async function submitQuery(txt) {
 
   if (S.phase === 'tutorial') tutQueryDone();
   if (S.phase === 'game') persistGameState();
+  updateAccuseAvailability();
   checkDeadEnd();
 }
 
@@ -255,6 +259,17 @@ function hasWinEvidence() {
   const groups = S.currentCase?.winGroups;
   if (!groups) return false;
   return groups.every(g => g.keywords.some(kw => mtext.includes(kw)));
+}
+
+function updateAccuseAvailability() {
+  const btn = document.getElementById('btn-accuse');
+  if (!btn || S.phase !== 'game') return;
+  const ready = hasWinEvidence();
+  btn.disabled = !ready;
+  btn.title = ready
+    ? 'File your accusation'
+    : 'Load key evidence into witness memory before accusing';
+  btn.textContent = ready ? 'Accuse' : 'Accuse Locked';
 }
 
 function canAddAnyFact() {
@@ -367,6 +382,7 @@ function handleDrop(fid) {
   } else if (S.phase === 'game') {
     gameDrop(fid);
     checkMemoryPressure();
+    updateAccuseAvailability();
   }
 }
 
@@ -385,7 +401,10 @@ function setupEvents() {
     btnCont.addEventListener('click', async () => {
       try {
         const saved = await loadCurrentGame();
-        if (saved) initGame(saved, saved.currentCaseId || 'medium');
+        if (saved) {
+          initGame(saved, saved.currentCaseId || 'medium');
+          updateAccuseAvailability();
+        }
         else showLevelSelect();
       } catch { showLevelSelect(); }
     });
@@ -407,21 +426,21 @@ function setupEvents() {
   document.getElementById('btn-level-easy').addEventListener('click', () => {
     document.getElementById('screen-level').style.display = 'none';
     renderOnboarding(CASES.easy, {
-      onStart: () => initGame(null, 'easy'),
+      onStart: () => { initGame(null, 'easy'); updateAccuseAvailability(); },
       onBack: () => showLevelSelect()
     });
   });
   document.getElementById('btn-level-medium').addEventListener('click', () => {
     document.getElementById('screen-level').style.display = 'none';
     renderOnboarding(CASES.medium, {
-      onStart: () => initGame(null, 'medium'),
+      onStart: () => { initGame(null, 'medium'); updateAccuseAvailability(); },
       onBack: () => showLevelSelect()
     });
   });
   document.getElementById('btn-level-hard').addEventListener('click', () => {
     document.getElementById('screen-level').style.display = 'none';
     renderOnboarding(CASES.hard, {
-      onStart: () => initGame(null, 'hard'),
+      onStart: () => { initGame(null, 'hard'); updateAccuseAvailability(); },
       onBack: () => showLevelSelect()
     });
   });

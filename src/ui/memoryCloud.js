@@ -8,7 +8,9 @@ export function renderCloud(onBubbleClick) {
   if (onBubbleClick !== undefined) _onBubbleClick = onBubbleClick;
   const cl = document.getElementById('memory-cloud');
   cl.querySelectorAll('.memory-bubble').forEach(b => b.remove());
-  document.getElementById('mcPlaceholder').style.display = S.memFacts.length ? 'none' : 'block';
+  const isEmpty = S.memFacts.length === 0;
+  cl.classList.toggle('empty', isEmpty);
+  document.getElementById('mcPlaceholder').style.display = isEmpty ? 'block' : 'none';
   const memIds = S.memFacts.map(f => f.id);
   S.memFacts.forEach(f => {
     const b = document.createElement('div');
