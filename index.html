@@ -249,58 +249,62 @@
 
   <!-- ══ MAIN GAME SCREEN ═════════════════════════════════════ -->
   <div id="screen-game" style="display:none">
+    <div id="game-bg"></div>
+    <div id="game-overlay"></div>
 
-    <!-- Token Bar -->
-    <div id="token-bar-wrap">
-      <button id="btn-home" title="Back to menu">←</button>
-      <span id="difficulty-badge" style="display:none" class="diff-badge">MEDIUM</span>
-      <div id="tbTitle">Memory</div>
-      <div id="token-bar-track">
-        <div id="token-bar-fill"></div>
-      </div>
-      <div id="tbLabel">0 / 140</div>
-      <div id="qCounter" style="display:none">Interrogation: 0 / 0t</div>
-    </div>
-
-    <!-- Middle: memory cloud + right panel (tabs) -->
-    <div id="game-middle">
-      <div id="memory-cloud">
-        <div id="mcPlaceholder">Drag facts here<br>to share with the witness</div>
+    <div id="game-content">
+      <!-- Token Bar -->
+      <div id="token-bar-wrap">
+        <button id="btn-home" title="Back to menu">←</button>
+        <span id="difficulty-badge" style="display:none" class="diff-badge">MEDIUM</span>
+        <div id="tbTitle">Memory</div>
+        <div id="token-bar-track">
+          <div id="token-bar-fill"></div>
+        </div>
+        <div id="tbLabel">0 / 140</div>
+        <div id="qCounter" style="display:none">Interrogation: 0 / 0t</div>
       </div>
 
-      <!-- Right panel with tabs -->
-      <div id="right-panel">
-        <div id="panel-tabs">
-          <button id="tab-evidence" class="tab-btn tab-active">Evidence</button>
-          <button id="tab-suspects" class="tab-btn">Suspects</button>
+      <!-- Middle: memory cloud + right panel (tabs) -->
+      <div id="game-middle">
+        <div id="memory-cloud">
+          <div id="mcPlaceholder">Drag facts here<br>to share with the witness</div>
         </div>
 
-        <!-- Case File tab -->
-        <div id="case-file">
-          <div id="cfTitle">Case File</div>
-        </div>
+        <!-- Right panel with tabs -->
+        <div id="right-panel">
+          <div id="panel-tabs">
+            <button id="tab-evidence" class="tab-btn tab-active">Evidence</button>
+            <button id="tab-suspects" class="tab-btn">Suspects</button>
+          </div>
 
-        <!-- Suspects tab -->
-        <div id="suspect-panel" style="display:none">
-          <div id="sp-title">Suspects</div>
-          <div id="suspect-list"></div>
+          <!-- Case File tab -->
+          <div id="case-file">
+            <div id="cfTitle">Case File</div>
+          </div>
+
+          <!-- Suspects tab -->
+          <div id="suspect-panel" style="display:none">
+            <div id="sp-title">Suspects</div>
+            <div id="suspect-list"></div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Chat Area -->
-    <div id="chat-area">
-      <div id="chat-log"></div>
-      <div id="chat-controls">
-        <div id="chat-input-row">
-          <input id="chat-input" type="text" placeholder="Ask the witness…" autocomplete="off">
-          <button id="btn-submit">Submit</button>
-        </div>
-        <div id="chat-btn-row">
-          <button id="btn-summarize">Summarize</button>
-          <button id="btn-confirm-merge">Confirm Merge</button>
-          <button id="btn-cancel-sum">Cancel</button>
-          <button id="btn-accuse" disabled style="display:none">Accuse</button>
+      <!-- Chat Area -->
+      <div id="chat-area">
+        <div id="chat-log"></div>
+        <div id="chat-controls">
+          <div id="chat-input-row">
+            <input id="chat-input" type="text" placeholder="Ask the witness…" autocomplete="off">
+            <button id="btn-submit">Submit</button>
+          </div>
+          <div id="chat-btn-row">
+            <button id="btn-summarize">Summarize</button>
+            <button id="btn-confirm-merge">Confirm Merge</button>
+            <button id="btn-cancel-sum">Cancel</button>
+            <button id="btn-accuse" disabled style="display:none">Accuse</button>
+          </div>
         </div>
       </div>
     </div>
